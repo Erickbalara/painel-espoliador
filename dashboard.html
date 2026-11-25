@@ -98,7 +98,7 @@ header{display:flex;align-items:center;justify-content:center;gap:44px;flex-wrap
 #cardArte.claro .div::before,#cardArte.claro .div::after{background:#193c6c}
 #cardArte.claro .rodape{background:#151615;margin:28px -54px -40px;padding:26px 0 30px}
 /* ----- Card comparativo (tabela por DPA / departamento) ----- */
-#cardArte .cabc,#cardArte .linc,#cardArte .totc{display:grid;grid-template-columns:1fr 128px 128px 136px 150px;gap:0 12px;align-items:center}
+#cardArte .cabc,#cardArte .linc,#cardArte .totc{display:grid;grid-template-columns:1fr 118px 118px 130px 100px 140px;gap:0 10px;align-items:center}
 #cardArte .cabc{margin:26px 0 8px;align-items:end;text-align:center;font-weight:800}
 #cardArte .cabc .nm{text-align:left;font-size:22px;color:#c2c0bf;letter-spacing:1px;padding-left:20px}
 #cardArte .cabc .grp{grid-column:2 / span 2;font-size:20px;line-height:1.15;padding:0 4px 6px;border-bottom:3px solid #ffce44;color:#fff}
@@ -1017,7 +1017,7 @@ $('#card').addEventListener('click', gerarCard);
 /* ============ GERAR CARD COMPARATIVO (tabela por DPA / departamento) ============ */
 const COMP_DEPS = ['DGPE','DGPAM','DGCOR-LD','DGHPP','DGPDEAC'];   // unidades listadas em linha própria
 function dadosComparativo(){
-  const linhas = new Map(), nova = rot => { if (!linhas.has(rot)) linhas.set(rot, {rot, m:0, a:0, aa:0}); return linhas.get(rot); };
+  const linhas = new Map(), nova = rot => { if (!linhas.has(rot)) linhas.set(rot, {rot, m:0, a:0, aa:0, tc:0, t:0}); return linhas.get(rot); };
   for (let n = 1; n <= 8; n++) nova(`${n}º DPA`);
   const deps = [...COMP_DEPS];
   for (const r of VIEW){   // unidade sem DPA numérico fora da lista fixa ganha linha própria (o total não perde ninguém)
@@ -1028,14 +1028,16 @@ function dadosComparativo(){
     if (r.mandado) alvo.m++;                 // mandado: maior ou menor
     if (r.apf) alvo.a++;                     // APF marcado = soma (em regra, maior)
     if (r.aaapai) alvo.aa++;                 // AAAPAI marcado = soma (em regra, menor)
+    if (r.tc) alvo.tc++;                     // termo circunstanciado
+    if (r.mandado || r.apf || r.aaapai || r.tc) alvo.t++;   // Total = pessoas (pessoa + RO) com alguma marca: conta 1× mesmo com várias
   }
   for (const dd of deps) nova(dd);
-  const todas = [...linhas.values()].map(l => ({...l, t:l.m + l.a + l.aa}));
+  const todas = [...linhas.values()];
   const dpa = todas.filter(l => /º DPA$/.test(l.rot)).sort((x,y) => parseInt(x.rot) - parseInt(y.rot));
   const dep = deps.map(dd => todas.find(l => l.rot === dd));
   const S = k => todas.reduce((s,l) => s + l[k], 0);
   const apfMe = VIEW.filter(r => r.apf && r.adol).length, aaaMa = VIEW.filter(r => r.aaapai && !r.adol).length;   // marcas fora da regra da coluna
-  return {dpa, dep, tot:{m:S('m'), a:S('a'), aa:S('aa'), t:S('t')}, apfMe, aaaMa};
+  return {dpa, dep, tot:{m:S('m'), a:S('a'), aa:S('aa'), tc:S('tc'), t:S('t')}, apfMe, aaaMa};
 }
 function montarCardComp(){
   const d = dadosComparativo(), agora = new Date(), p = n => String(n).padStart(2,'0');
@@ -1044,18 +1046,18 @@ function montarCardComp(){
   const pm = /^Dia D - (\d+)ª Parcial$/.exec(F.fase.value || ''), hora = pm && PARC_HORA[+pm[1]] ? ` (${PARC_HORA[+pm[1]]})` : '';   // parcial: acrescenta o horário
   const periodo = (F.fase.value || 'Todo o período').toLocaleUpperCase('pt-BR') + hora;
   const z = v => `<span class="n${v === 0 ? ' z' : ''}">${v}</span>`;
-  const lin = l => `<div class="linc"><span class="nm">${esc(l.rot)}</span>${z(l.m)}${z(l.a)}${z(l.aa)}<span class="n tt${l.t === 0 ? ' z' : ''}">${l.t}</span></div>`;
+  const lin = l => `<div class="linc"><span class="nm">${esc(l.rot)}</span>${z(l.m)}${z(l.a)}${z(l.aa)}${z(l.tc)}<span class="n tt${l.t === 0 ? ' z' : ''}">${l.t}</span></div>`;
   $('#cardArte').className = 'comp' + (TEMA === 'light' ? ' claro' : '');
   $('#cardArte').innerHTML = `
     <div class="topo"><img class="esp" src="${espSrc}"></div>
     <div class="faixa bal"><span>PARCIAL DE ${p(agora.getDate())}/${p(agora.getMonth()+1)}/${agora.getFullYear()} - ${esc(periodo)}</span></div>
-    <div class="cabc"><span class="nm">ÁREA</span><span class="grp">PESSOAS COM INDICAÇÃO DE PRISÃO</span><span class="h">AAAPAI</span><span class="h">TOTAL</span>
-      <span></span><span class="sub2">Mandado</span><span class="sub2">APF</span><span></span><span></span></div>
+    <div class="cabc"><span class="nm">ÁREA</span><span class="grp">PESSOAS COM INDICAÇÃO DE PRISÃO</span><span class="h">AAAPAI</span><span class="h">TC</span><span class="h">TOTAL</span>
+      <span></span><span class="sub2">Mandado</span><span class="sub2">APF</span><span></span><span></span><span></span></div>
     ${d.dpa.map(lin).join('')}
     <div class="sepc"></div>
     ${d.dep.map(lin).join('')}
-    <div class="totc"><span class="nm">TOTAL:</span><span class="n">${d.tot.m}</span><span class="n">${d.tot.a}</span><span class="n">${d.tot.aa}</span><span class="n tt">${d.tot.t}</span></div>
-    <div class="nota">Mandado: maiores e menores · APF: em regra só maiores · AAAPAI: em regra só menores · Total = Mandado + APF + AAAPAI${(d.apfMe || d.aaaMa) ? `<br><b>Incluem, fora da regra da coluna (conferir na planilha): ${[d.apfMe ? `${d.apfMe} menor${d.apfMe > 1 ? 'es' : ''} com APF` : '', d.aaaMa ? `${d.aaaMa} maior${d.aaaMa > 1 ? 'es' : ''} com AAAPAI` : ''].filter(Boolean).join(' · ')}</b>` : ''}</div>
+    <div class="totc"><span class="nm">TOTAL:</span><span class="n">${d.tot.m}</span><span class="n">${d.tot.a}</span><span class="n">${d.tot.aa}</span><span class="n">${d.tot.tc}</span><span class="n tt">${d.tot.t}</span></div>
+    <div class="nota">Mandado: maiores e menores · APF: em regra só maiores · AAAPAI: em regra só menores · TC: termo circunstanciado · Total = pessoas (pessoa + RO) com alguma marca; quem tem mais de uma conta uma só vez${(d.apfMe || d.aaaMa) ? `<br><b>Incluem, fora da regra da coluna (conferir na planilha): ${[d.apfMe ? `${d.apfMe} menor${d.apfMe > 1 ? 'es' : ''} com APF` : '', d.aaaMa ? `${d.aaaMa} maior${d.aaaMa > 1 ? 'es' : ''} com AAAPAI` : ''].filter(Boolean).join(' · ')}</b>` : ''}</div>
     <div class="rodape"><div class="logos"><img src="${pcSrc}"><span class="sep"></span><img src="${sspSrc}"></div><i>Dados parciais sujeitos a conferência</i></div>`;
   const bal = $('#cardArte .bal');   // texto da faixa longo (ex.: parcial + horário): reduz a fonte até caber, com respiro nas laterais
   const sp = bal.firstElementChild;
