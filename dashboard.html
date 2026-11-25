@@ -387,11 +387,12 @@ function parseDate(v){
 }
 
 /* ============ LEITURA DA PLANILHA ============ */
+let PARC_HORA = {};   // horário de cada parcial, lido da marcação (ex.: {1:'7h30min', 2:'9h30min'})
 let MAXP = 0;   // maior nº de parcial encontrado nas marcações "ESPOLIADOR DIA D ... (nª parcial)"
 let RECORDS = [], HAS_DATE = false, ALL_DEPS = new Set(), RELACAO = {...RELACAO_CISP};
 
 function parseWorkbook(wb){
-  const out = []; let rel = {...RELACAO_CISP}; HAS_DATE = false; ALL_DEPS = new Set(); MAXP = 0;
+  const out = []; let rel = {...RELACAO_CISP}; HAS_DATE = false; ALL_DEPS = new Set(); MAXP = 0; PARC_HORA = {};
   for (const name of wb.SheetNames){
     const ws = wb.Sheets[name];
     const rows = XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null});
@@ -408,7 +409,9 @@ function parseWorkbook(wb){
       const r = rows[i] || [];
       if (/ESPOLIADOR/i.test(str(r[0])) && !str(r[2])) {   // marcação do Dia D ou de uma nova parcial
         const m = str(r[0]).match(/(\d+)\s*[ªºao°]?\s*parcial/i);
-        parcial = m ? +m[1] : parcial + 1; MAXP = Math.max(MAXP, parcial); fase = 'Dia D'; continue;
+        parcial = m ? +m[1] : parcial + 1; MAXP = Math.max(MAXP, parcial); fase = 'Dia D';
+        const t = str(r[0]).match(/(\d{1,2})\s*h\s*(\d{2})?/i); if (t && !PARC_HORA[parcial]) PARC_HORA[parcial] = `${+t[1]}h${t[2] || '00'}min`;
+        continue;
       }
       if (/^maconha$/i.test(str(r[15])) || /^\(sim/i.test(str(r[3]))) continue;  // cabeçalho repetido
       if (!str(r[2]) && !str(r[8])) continue;
@@ -789,6 +792,10 @@ function baixar(blob, nome){
 /* ============ CARGA ============ */
 function setupStaticFilters(){
   opts(F.fase, ['Fase preparatória', 'Dia D - Total', ...Array.from({length:MAXP}, (_,i) => `Dia D - ${i+1}ª Parcial`)], 'Todo o período');
+  for (const o of F.fase.options){   // mostra o horário da parcial no menu (o valor do filtro continua sem horário)
+    const v = o.value, m = /^Dia D - (\d+)ª Parcial$/.exec(v);
+    o.value = v; if (m && PARC_HORA[+m[1]]) o.textContent = `${v} (${PARC_HORA[+m[1]]})`;
+  }
   $('#boxDate1').hidden = $('#boxDate2').hidden = !HAS_DATE;
   $('#boxAisp').hidden = !RECORDS.some(r=>r.aisp);
 }
@@ -1002,13 +1009,14 @@ function montarCardComp(){
   const d = dadosComparativo(), agora = new Date(), p = n => String(n).padStart(2,'0');
   const espSrc = document.querySelector('.brand img').src;
   const pcSrc = document.querySelector('.inst img[alt^="Polícia"]').src, sspSrc = document.querySelector('.inst img[alt^="SSPIO"]').src;
-  const periodo = (F.fase.value || 'Todo o período').toLocaleUpperCase('pt-BR');
+  const pm = /^Dia D - (\d+)ª Parcial$/.exec(F.fase.value || ''), hora = pm && PARC_HORA[+pm[1]] ? ` (${PARC_HORA[+pm[1]]})` : '';   // parcial: acrescenta o horário
+  const periodo = (F.fase.value || 'Todo o período').toLocaleUpperCase('pt-BR') + hora;
   const z = v => `<span class="n${v === 0 ? ' z' : ''}">${v}</span>`;
   const lin = l => `<div class="linc"><span class="nm">${esc(l.rot)}</span>${z(l.m)}${z(l.a)}${z(l.aa)}<span class="n tt${l.t === 0 ? ' z' : ''}">${l.t}</span></div>`;
   $('#cardArte').className = 'comp' + (TEMA === 'light' ? ' claro' : '');
   $('#cardArte').innerHTML = `
     <div class="topo"><img class="esp" src="${espSrc}"></div>
-    <div class="faixa bal">PARCIAL DE ${p(agora.getDate())}/${p(agora.getMonth()+1)}/${agora.getFullYear()} - ${esc(periodo)}</div>
+    <div class="faixa bal"><span>PARCIAL DE ${p(agora.getDate())}/${p(agora.getMonth()+1)}/${agora.getFullYear()} - ${esc(periodo)}</span></div>
     <div class="cabc"><span class="nm">ÁREA</span><span class="grp">PESSOAS COM INDICAÇÃO DE PRISÃO</span><span class="h">AAAPAI</span><span class="h">TOTAL</span>
       <span></span><span class="sub2">Mandado</span><span class="sub2">APF</span><span></span><span></span></div>
     ${d.dpa.map(lin).join('')}
@@ -1017,6 +1025,9 @@ function montarCardComp(){
     <div class="totc"><span class="nm">TOTAL:</span><span class="n">${d.tot.m}</span><span class="n">${d.tot.a}</span><span class="n">${d.tot.aa}</span><span class="n tt">${d.tot.t}</span></div>
     <div class="nota">Mandado e APF: somente maiores de idade · AAAPAI: apreensão de adolescente · Total = Mandado + APF + AAAPAI</div>
     <div class="rodape"><div class="logos"><img src="${pcSrc}"><span class="sep"></span><img src="${sspSrc}"></div><i>Dados parciais sujeitos a conferência</i></div>`;
+  const bal = $('#cardArte .bal');   // texto da faixa longo (ex.: parcial + horário): reduz a fonte até caber, com respiro nas laterais
+  const sp = bal.firstElementChild;
+  for (let fs = 32; fs > 18 && sp.offsetWidth > bal.clientWidth - 90; fs--) bal.style.fontSize = fs + 'px';
   return agora;
 }
 async function gerarCardComp(){
