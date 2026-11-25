@@ -65,6 +65,13 @@ header{display:flex;align-items:center;justify-content:center;gap:44px;flex-wrap
 #cardArte .faixa.peq,#cardArte .faixa.din{background:none;color:#fff;border:3px solid #ffce44;border-radius:20px}
 #cardArte .faixa .n{font-weight:900;color:#ffce44;text-shadow:0 4px 0 #b8922a}
 #cardArte .faixa.peq{font-size:36px;padding:12px 18px}
+#cardArte .sub.dois{font-size:38px;line-height:1.12;white-space:normal;margin:6px 0 22px}
+#cardArte .duo.k{gap:16px 22px;margin-bottom:18px}
+#cardArte .duo.k .box{padding:10px 8px 14px}
+#cardArte .duo.k .box .n{font-size:100px}
+#cardArte .duo.k .box .t{font-size:30px;white-space:nowrap}
+#cardArte .duo.k .box.larga{grid-column:1 / span 2;padding-bottom:12px}
+#cardArte .duo.k .box .t2{font-size:24px;font-weight:700;margin-top:2px;opacity:.85}
 #cardArte .big{text-align:center;font-weight:900;font-size:270px;line-height:1;color:#ffce44;margin:18px 0 0;letter-spacing:-6px;
   text-shadow:0 0 30px rgba(255,206,68,.35),0 6px 0 #b8922a}
 #cardArte .sub{text-align:center;font-weight:800;font-size:43px;margin:4px 0 20px;white-space:nowrap}
@@ -975,7 +982,10 @@ function dadosCard(){
     [a.drogas.Crack, g => peso(g,'crack')],
     [a.drogas.Outros, g => peso(g,'outras drogas')],
   ].filter(([n]) => n > 0).map(([n, f]) => f(n));
-  return {total: mandado + apf, mandado, apf, adolApre: a.adolApre, itens, dinheiro: a.dinheiro};
+  const unicas = VIEW.filter(r => r.mandado || r.apf || r.aaapai || r.tc).length;   // pessoas únicas com qualquer marca (número principal do card)
+  const cnt = f => VIEW.filter(f).length;   // KPIs por coluna da planilha (maiores e menores), iguais aos do painel
+  return {total: unicas, mM: cnt(r => r.mandado), mA: cnt(r => r.apf), mAA: cnt(r => r.aaapai), mTC: cnt(r => r.tc),
+          reinc: a.reinc, reincEsp: a.reincEsp, reincGen: a.reincGen, adolApre: a.adolApre, itens, dinheiro: a.dinheiro};
 }
 function montarCard(){
   const d = dadosCard(), agora = new Date(), p = n => String(n).padStart(2,'0');
@@ -992,15 +1002,19 @@ function montarCard(){
     <div class="topo${selo ? ' comselo' : ''}"><img class="esp" src="${espSrc}">${selo ? `<div class="selo">${selo}</div>` : ''}</div>
     <div class="faixa bal">BALANÇO PARCIAL ATÉ ${p(agora.getDate())}/${p(agora.getMonth()+1)} ÀS ${p(agora.getHours())}H${p(agora.getMinutes())}</div>
     <div class="big">${fmt(d.total)}</div>
-    <div class="sub">PESSOAS COM INDICAÇÃO DE PRISÃO</div>
-    <div class="duo">
-      <div class="box"><div class="n">${fmt(d.mandado)}</div><div class="t">por mandado</div></div>
-      <div class="box"><div class="n">${fmt(d.apf)}</div><div class="t">vinculadas a APF</div></div>
+    <div class="sub dois">${d.total === 1 ? 'PESSOA' : 'PESSOAS'} COM INDICAÇÃO DE<br>MANDADO, APF, AAAPAI OU TC</div>
+    <div class="duo k">
+      <div class="box"><div class="n">${fmt(d.mM)}</div><div class="t">Cumprimento de mandado</div></div>
+      <div class="box"><div class="n">${fmt(d.mA)}</div><div class="t">Vinculadas a APF</div></div>
+      <div class="box"><div class="n">${fmt(d.mAA)}</div><div class="t">Vinculadas a AAAPAI</div></div>
+      <div class="box"><div class="n">${fmt(d.mTC)}</div><div class="t">Vinculadas a TC</div></div>
+      <div class="box larga"><div class="n">${fmt(d.reinc)}</div><div class="t">Reincidentes*</div><div class="t2">${fmt(d.reincEsp)} específicas · ${fmt(d.reincGen)} genéricas</div></div>
     </div>
     <div class="faixa peq"><span class="n" style="font-size:56px">${fmt(d.adolApre)}</span> ${d.adolApre === 1 ? 'adolescente permaneceu apreendido' : 'adolescentes permaneceram apreendidos'}</div>
     ${d.itens.length || d.dinheiro ? '<div class="div">APREENSÕES E RECUPERAÇÕES</div>' : ''}
     <div class="tiles">${tiles}</div>
     ${d.dinheiro ? `<div class="faixa din"><span class="n">${brl(d.dinheiro)}</span> em dinheiro</div>` : ''}
+    <div class="nota" style="margin-top:16px;font-size:15px;line-height:1.35"><b>Nota metodológica:</b> uma mesma pessoa pode estar envolvida em mais de uma situação (Mandado, APF, AAAPAI ou TC); por isso a soma das caixas pode ser maior que o total de pessoas, que conta cada pessoa uma só vez.<br>* Reincidentes: pessoa contada uma só vez, mesmo com reincidência específica e genérica.</div>
     <div class="rodape"><div class="logos"><img src="${pcSrc}"><span class="sep"></span><img src="${sspSrc}"></div><i>Dados parciais sujeitos a conferência</i></div>`;
   return agora;
 }
