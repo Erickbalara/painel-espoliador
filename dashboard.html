@@ -97,6 +97,33 @@ header{display:flex;align-items:center;justify-content:center;gap:44px;flex-wrap
 #cardArte.claro .div{color:#151615}
 #cardArte.claro .div::before,#cardArte.claro .div::after{background:#193c6c}
 #cardArte.claro .rodape{background:#151615;margin:28px -54px -40px;padding:26px 0 30px}
+/* ----- Card comparativo (tabela por DPA / departamento) ----- */
+#cardArte .cabc,#cardArte .linc,#cardArte .totc{display:grid;grid-template-columns:1fr 128px 128px 136px 150px;gap:0 12px;align-items:center}
+#cardArte .cabc{margin:26px 0 8px;align-items:end;text-align:center;font-weight:800}
+#cardArte .cabc .nm{text-align:left;font-size:22px;color:#c2c0bf;letter-spacing:1px;padding-left:20px}
+#cardArte .cabc .grp{grid-column:2 / span 2;font-size:20px;line-height:1.15;padding:0 4px 6px;border-bottom:3px solid #ffce44;color:#fff}
+#cardArte .cabc .sub2{font-size:21px;color:#ffce44;padding-top:8px}
+#cardArte .cabc .h{font-size:24px;color:#fff;padding-bottom:6px}
+#cardArte .linc{border:3px solid #ffce44;border-radius:20px;height:66px;margin-bottom:9px}
+#cardArte .linc .nm{font-weight:800;font-size:34px;padding-left:22px}
+#cardArte .linc .n,#cardArte .totc .n{text-align:center;font-weight:900;font-size:48px;line-height:1;color:#ffce44;text-shadow:0 4px 0 #b8922a}
+#cardArte .n.z{opacity:.38;text-shadow:none}
+#cardArte .linc .n.tt{color:#fff;text-shadow:none;border-left:3px solid rgba(255,206,68,.55);height:44px;line-height:44px}
+#cardArte .sepc{height:4px;background:#ffce44;border-radius:2px;margin:16px 0 18px;opacity:.9}
+#cardArte .totc{border:4px solid #ffce44;border-radius:24px;height:104px;margin-top:20px;background:rgba(255,206,68,.07)}
+#cardArte .totc .nm{font-weight:900;font-size:50px;padding-left:24px;letter-spacing:1px}
+#cardArte .totc .n{font-size:60px}
+#cardArte .totc .n.tt{font-size:74px;border-left:3px solid rgba(255,206,68,.55)}
+#cardArte .nota{text-align:center;color:#c2c0bf;font-size:17px;margin-top:14px;line-height:1.4}
+#cardArte.claro .cabc .nm,#cardArte.claro .nota{color:#595857}
+#cardArte.claro .cabc .grp{color:#151615;border-bottom-color:#193c6c}
+#cardArte.claro .cabc .sub2{color:#193c6c}#cardArte.claro .cabc .h{color:#151615}
+#cardArte.claro .linc{background:#f8f6f5;border-color:#193c6c;color:#151615}
+#cardArte.claro .linc .n,#cardArte.claro .totc .n{color:#193c6c;text-shadow:none}
+#cardArte.claro .linc .n.tt{color:#151615;border-left-color:rgba(25,60,108,.4)}
+#cardArte.claro .sepc{background:#193c6c}
+#cardArte.claro .totc{background:#ffce44;border-color:#193c6c;color:#151615}
+#cardArte.claro .totc .n,#cardArte.claro .totc .n.tt{color:#151615;border-left-color:rgba(21,22,21,.4)}
 .toast{position:fixed;right:16px;bottom:16px;z-index:20;max-width:420px;background:var(--panel2);border:1px solid var(--gold);border-radius:10px;padding:12px 14px;font-size:13px;box-shadow:0 8px 24px #0008}
 .toast a{color:var(--gold);font-weight:700}
 .toast button{margin-left:6px;padding:2px 8px}
@@ -225,6 +252,7 @@ ul.obs{margin:0;padding-left:18px;color:var(--muted);font-size:12.5px}
     <div class="grp">
       <button id="tema" type="button" title="Alternar entre tema escuro e claro" aria-label="Alternar tema"></button>
       <button id="card">🖼️ Gerar Card</button>
+      <button id="cardComp">📊 Gerar Card Comparativo</button>
       <button id="print">📄 Gerar PDF</button>
     </div>
   </div>
@@ -279,9 +307,9 @@ ul.obs{margin:0;padding-left:18px;color:var(--muted);font-size:12.5px}
   </div>
 
   <p class="note">
-    Fonte: abas de departamento da planilha (a aba SSPIO é ignorada por ser consolidação). Pessoas repetidas (mesmo RO + nome, inclusive entre departamentos) contam uma vez, somando as marcas de todas as linhas; sem nome, o RO conta como uma pessoa "Não identificado".
+    Fonte: abas de departamento da planilha (a aba SSPIO é ignorada por ser consolidação). Linhas repetidas da mesma pessoa (mesmo RO + nome) no mesmo departamento e período contam uma vez; se ela aparecer em outro departamento ou período, conta a cada aparição. Sem nome, o RO conta como uma pessoa "Não identificado".
     Pesos de drogas, dinheiro e itens descritos em texto repetidos no mesmo procedimento (co-autores) contam uma vez; armas, veículos e celulares somam por pessoa.
-    "Fase preparatória" = linhas acima da marcação "ESPOLIADOR DIA D" em cada aba; "Dia D" = linhas abaixo.
+    "Fase preparatória" = linhas acima da 1ª marcação "ESPOLIADOR DIA D" de cada aba; "Dia D - Total" = todas as linhas abaixo dela; "Dia D - nª Parcial" = linhas entre a marcação da parcial n e a marcação seguinte.
   </p>
 </main>
 <div id="cardArte" aria-hidden="true"></div>
@@ -359,10 +387,11 @@ function parseDate(v){
 }
 
 /* ============ LEITURA DA PLANILHA ============ */
+let MAXP = 0;   // maior nº de parcial encontrado nas marcações "ESPOLIADOR DIA D ... (nª parcial)"
 let RECORDS = [], HAS_DATE = false, ALL_DEPS = new Set(), RELACAO = {...RELACAO_CISP};
 
 function parseWorkbook(wb){
-  const out = []; let rel = {...RELACAO_CISP}; HAS_DATE = false; ALL_DEPS = new Set();
+  const out = []; let rel = {...RELACAO_CISP}; HAS_DATE = false; ALL_DEPS = new Set(); MAXP = 0;
   for (const name of wb.SheetNames){
     const ws = wb.Sheets[name];
     const rows = XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null});
@@ -374,15 +403,18 @@ function parseWorkbook(wb){
     const dateCol = (rows[h]||[]).findIndex(c => /^data\b/i.test(str(c)));
     let start = h+1;
     while (start < rows.length && start < h+4 && !str(rows[start][2]) && !str(rows[start][8])) start++;
-    let fase = 'Fase preparatória';
+    let fase = 'Fase preparatória', parcial = 0;
     for (let i = start; i < rows.length; i++){
       const r = rows[i] || [];
-      if (/ESPOLIADOR/i.test(str(r[0])) && !str(r[2])) { fase = 'Dia D'; continue; }
+      if (/ESPOLIADOR/i.test(str(r[0])) && !str(r[2])) {   // marcação do Dia D ou de uma nova parcial
+        const m = str(r[0]).match(/(\d+)\s*[ªºao°]?\s*parcial/i);
+        parcial = m ? +m[1] : parcial + 1; MAXP = Math.max(MAXP, parcial); fase = 'Dia D'; continue;
+      }
       if (/^maconha$/i.test(str(r[15])) || /^\(sim/i.test(str(r[3]))) continue;  // cabeçalho repetido
       if (!str(r[2]) && !str(r[8])) continue;
       const del = normDel(r[1]);
       out.push({
-        id: name+'!'+(i+1), dep: name.trim().toUpperCase(), fase,
+        id: name+'!'+(i+1), dep: name.trim().toUpperCase(), fase, parcial,
         dpa: normDPA(r[0]), delegacia: del.nome, cisp: del.cisp,
         proc: str(r[2]).replace(/^\*\s*/,''), nome: semNome(str(r[8])) ? NAO_ID : str(r[8]),
         mandado: isYes(r[3]), apf: isYes(r[4]), aaapai: isYes(r[5]), tc: isYes(r[6]),
@@ -395,16 +427,17 @@ function parseWorkbook(wb){
       if (dateCol >= 0) HAS_DATE = true;
     }
   }
-  // dedup pessoa: mesmo RO + nome, ENTRE departamentos. Sem nome (ou "não identificado") = uma única pessoa "Não identificado" por RO.
+  // dedup pessoa: mesmo RO + nome no mesmo departamento e período. Aparecendo em outro departamento ou período, conta de novo. Sem nome = uma "Não identificado" por RO.
   // linhas repetidas são mescladas (flags em OU; apreensões: primeiro valor preenchido); a pessoa fica no 1º departamento em que aparece
-  out.forEach(r => { r.pl = [{dep:r.dep, dpa:r.dpa, delegacia:r.delegacia, cisp:r.cisp, aisp:''}]; });   // locais onde a pessoa aparece
+  out.forEach(r => { r.pl = [{dep:r.dep, dpa:r.dpa, delegacia:r.delegacia, cisp:r.cisp, aisp:'', fase:r.fase, parcial:r.parcial}]; });   // locais onde a pessoa aparece
   const seen = new Map();
   RECORDS = out.filter(r => {
-    const k = r.proc ? r.proc+'|'+r.nome.toUpperCase()                       // com RO: junta entre departamentos
-            : (r.nome === NAO_ID ? null : r.dep+'||'+r.nome.toUpperCase());    // sem RO: só dentro do próprio departamento
+    const per = r.fase+'|'+r.parcial;                                          // mesmo departamento E mesmo período
+    const k = r.proc ? r.dep+'|'+per+'|'+r.proc+'|'+r.nome.toUpperCase()        // com RO: junta só linhas repetidas no mesmo departamento/período
+            : (r.nome === NAO_ID ? null : r.dep+'|'+per+'||'+r.nome.toUpperCase());
     if (k === null || !seen.has(k)){ if (k !== null) seen.set(k, r); return true; }
     const p = seen.get(k);
-    if (!p.pl.some(x => x.dep === r.dep && x.dpa === r.dpa && x.delegacia === r.delegacia)) p.pl.push(r.pl[0]);   // aparece nos dois lados dos filtros
+    if (!p.pl.some(x => x.dep === r.dep && x.dpa === r.dpa && x.delegacia === r.delegacia && x.parcial === r.parcial)) p.pl.push(r.pl[0]);   // aparece nos dois lados dos filtros
     for (const f of ['mandado','apf','aaapai','tc','adol','adolApre','grp','fianca']) p[f] = p[f] || r[f];
     r.raw.forEach((v,i) => { if (isNeg(p.raw[i]) && !isNeg(v)) p.raw[i] = v; });
     if (isNeg(p.reincEsp)) p.reincEsp = r.reincEsp; if (isNeg(p.reincGen)) p.reincGen = r.reincGen;
@@ -478,7 +511,7 @@ function opts(sel, values, all='Todos'){
 const natSort = (a,b) => a.localeCompare(b,'pt-BR',{numeric:true});
 function applyFilters(ignore){
   return RECORDS.filter(r =>
-    (!F.fase.value || r.fase===F.fase.value) &&
+    (!F.fase.value || faseOk(r, F.fase.value)) &&
     (ignore==='dep'  || !F.dep.value  || has(r,'dep',F.dep.value)) &&
     (ignore==='risp' || !F.risp.value || has(r,'dpa',F.risp.value)) &&
     (ignore==='aisp' || !F.aisp.value || has(r,'aisp',F.aisp.value)) &&
@@ -526,6 +559,9 @@ function aplicarTema(t, redesenhar){
 }
 (function(){ let s = null; try{ s = localStorage.getItem('esp_tema'); }catch(_){} aplicarTema(s === 'light' ? 'light' : 'dark', false); })();
 document.getElementById('tema').addEventListener('click', () => aplicarTema(TEMA === 'dark' ? 'light' : 'dark', true));
+// períodos: "Fase preparatória" | "Dia D - Total" (tudo abaixo da 1ª marcação) | "Dia D - nª Parcial" (entre a marcação n e a seguinte)
+const periodoLabel = p => p.fase === 'Dia D' ? `Dia D - ${p.parcial}ª Parcial` : p.fase;
+const faseOk = (r, v) => r.pl.some(p => v === 'Dia D - Total' ? p.fase === 'Dia D' : v === 'Fase preparatória' ? p.fase === v : periodoLabel(p) === v);
 const PLK = ['dep','dpa','delegacia','aisp'];                      // campos em que a pessoa pode aparecer em mais de um lugar
 const pv  = (r, key) => [...new Set(r.pl.map(p => p[key]))];       // valores distintos do campo
 const has = (r, key, k) => PLK.includes(key) ? r.pl.some(p => p[key] === k) : r[key] === k;
@@ -629,7 +665,7 @@ function ligarCaixaTotal(id, names, uniq, soma){
     if (i < 0) return esconde();
     const dif = soma[i] - uniq[i];
     tip.innerHTML = `<div class="nm">${esc(names[i])}</div>
-      <div class="row"><span>Pessoas únicas</span><b>${fmt(uniq[i])}</b></div>
+      <div class="row"><span>Registros de pessoas</span><b>${fmt(uniq[i])}</b></div>
       <div class="row"><span>Soma das barras</span><b>${fmt(soma[i])}</b></div>
       <small>${dif > 0 ? `${fmt(dif)} ${dif === 1 ? 'pessoa tem' : 'pessoas têm'} mais de uma marca (Mandado, APF, AAAPAI ou TC) e ${dif === 1 ? 'é contada' : 'são contadas'} em cada fatia correspondente.` : 'Nenhuma pessoa tem mais de uma marca: a soma das barras coincide com o número de pessoas.'}</small>`;
     tip.style.display = 'block'; cv.style.cursor = 'help';
@@ -752,7 +788,7 @@ function baixar(blob, nome){
 
 /* ============ CARGA ============ */
 function setupStaticFilters(){
-  opts(F.fase, ['Fase preparatória','Dia D'], 'Todo o período');
+  opts(F.fase, ['Fase preparatória', 'Dia D - Total', ...Array.from({length:MAXP}, (_,i) => `Dia D - ${i+1}ª Parcial`)], 'Todo o período');
   $('#boxDate1').hidden = $('#boxDate2').hidden = !HAS_DATE;
   $('#boxAisp').hidden = !RECORDS.some(r=>r.aisp);
 }
@@ -908,7 +944,7 @@ function montarCard(){
   const sspSrc = document.querySelector('.inst img[alt^="SSPIO"]').src;
   const tiles = d.itens.map(([n,t], i) =>
     `<div class="tile${i === d.itens.length-1 && d.itens.length % 2 ? ' full' : ''}"><span class="n">${n}</span><span class="t">${t}</span></div>`).join('');
-  $('#cardArte').className = TEMA === 'light' ? 'claro' : '';   // o card segue o tema ativo no momento da geração
+  $('#cardArte').className = TEMA === 'light' ? 'claro' : '';   // (remove 'comp' se vier do card comparativo)   // o card segue o tema ativo no momento da geração
   $('#cardArte').innerHTML = `
     <div class="topo${selo ? ' comselo' : ''}"><img class="esp" src="${espSrc}">${selo ? `<div class="selo">${selo}</div>` : ''}</div>
     <div class="faixa bal">BALANÇO PARCIAL ATÉ ${p(agora.getDate())}/${p(agora.getMonth()+1)} ÀS ${p(agora.getHours())}H${p(agora.getMinutes())}</div>
@@ -941,6 +977,64 @@ async function gerarCard(){
   finally{ btn.disabled = false; btn.textContent = '🖼️ Gerar Card'; }
 }
 $('#card').addEventListener('click', gerarCard);
+/* ============ GERAR CARD COMPARATIVO (tabela por DPA / departamento) ============ */
+const COMP_DEPS = ['DGPE','DGPAM','DGCOR-LD','DGHPP','DGPDEAC'];   // unidades listadas em linha própria
+function dadosComparativo(){
+  const linhas = new Map(), nova = rot => { if (!linhas.has(rot)) linhas.set(rot, {rot, m:0, a:0, aa:0}); return linhas.get(rot); };
+  for (let n = 1; n <= 8; n++) nova(`${n}º DPA`);
+  const deps = [...COMP_DEPS];
+  for (const r of VIEW){   // unidade sem DPA numérico fora da lista fixa ganha linha própria (o total não perde ninguém)
+    if (!/^(\d+)º DPA$/.test(r.dpa) && !deps.includes(r.dep)) deps.push(r.dep);
+  }
+  for (const r of VIEW){   // quem tem DPA numérico entra na linha do DPA; unidade especializada entra na linha do seu departamento
+    const alvo = /^(\d+)º DPA$/.test(r.dpa) ? nova(r.dpa) : nova(r.dep);
+    if (!r.adol){ if (r.mandado) alvo.m++; if (r.apf) alvo.a++; }
+    if (r.aaapai) alvo.aa++;
+  }
+  for (const dd of deps) nova(dd);
+  const todas = [...linhas.values()].map(l => ({...l, t:l.m + l.a + l.aa}));
+  const dpa = todas.filter(l => /º DPA$/.test(l.rot)).sort((x,y) => parseInt(x.rot) - parseInt(y.rot));
+  const dep = deps.map(dd => todas.find(l => l.rot === dd));
+  const S = k => todas.reduce((s,l) => s + l[k], 0);
+  return {dpa, dep, tot:{m:S('m'), a:S('a'), aa:S('aa'), t:S('t')}};
+}
+function montarCardComp(){
+  const d = dadosComparativo(), agora = new Date(), p = n => String(n).padStart(2,'0');
+  const espSrc = document.querySelector('.brand img').src;
+  const pcSrc = document.querySelector('.inst img[alt^="Polícia"]').src, sspSrc = document.querySelector('.inst img[alt^="SSPIO"]').src;
+  const periodo = (F.fase.value || 'Todo o período').toLocaleUpperCase('pt-BR');
+  const z = v => `<span class="n${v === 0 ? ' z' : ''}">${v}</span>`;
+  const lin = l => `<div class="linc"><span class="nm">${esc(l.rot)}</span>${z(l.m)}${z(l.a)}${z(l.aa)}<span class="n tt${l.t === 0 ? ' z' : ''}">${l.t}</span></div>`;
+  $('#cardArte').className = 'comp' + (TEMA === 'light' ? ' claro' : '');
+  $('#cardArte').innerHTML = `
+    <div class="topo"><img class="esp" src="${espSrc}"></div>
+    <div class="faixa bal">PARCIAL DE ${p(agora.getDate())}/${p(agora.getMonth()+1)}/${agora.getFullYear()} - ${esc(periodo)}</div>
+    <div class="cabc"><span class="nm">ÁREA</span><span class="grp">PESSOAS COM INDICAÇÃO DE PRISÃO</span><span class="h">AAAPAI</span><span class="h">TOTAL</span>
+      <span></span><span class="sub2">Mandado</span><span class="sub2">APF</span><span></span><span></span></div>
+    ${d.dpa.map(lin).join('')}
+    <div class="sepc"></div>
+    ${d.dep.map(lin).join('')}
+    <div class="totc"><span class="nm">TOTAL:</span><span class="n">${d.tot.m}</span><span class="n">${d.tot.a}</span><span class="n">${d.tot.aa}</span><span class="n tt">${d.tot.t}</span></div>
+    <div class="nota">Mandado e APF: somente maiores de idade · AAAPAI: apreensão de adolescente · Total = Mandado + APF + AAAPAI</div>
+    <div class="rodape"><div class="logos"><img src="${pcSrc}"><span class="sep"></span><img src="${sspSrc}"></div><i>Dados parciais sujeitos a conferência</i></div>`;
+  return agora;
+}
+async function gerarCardComp(){
+  if (!RECORDS.length) return alert('Os dados ainda não foram carregados.');
+  const btn = $('#cardComp'); btn.disabled = true; btn.textContent = 'Gerando…';
+  try{
+    const agora = montarCardComp();
+    await Promise.all([...document.querySelectorAll('#cardArte img')].map(i => i.decode().catch(()=>{})));
+    const canvas = await html2canvas($('#cardArte'), {backgroundColor: TEMA === 'light' ? '#ffffff' : '#151615', scale:1, useCORS:true, logging:false,
+      onclone: doc => { const c = doc.getElementById('cardArte'); c.style.left = '0'; c.style.position = 'absolute'; }});
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    const p = n => String(n).padStart(2,'0');
+    baixar(blob, `Espoliador_Comparativo_${agora.getFullYear()}-${p(agora.getMonth()+1)}-${p(agora.getDate())}_${p(agora.getHours())}h${p(agora.getMinutes())}.png`);
+  }catch(e){ alert('Não foi possível gerar o card comparativo: ' + e.message); }
+  finally{ btn.disabled = false; btn.textContent = '📊 Gerar Card Comparativo'; }
+}
+$('#cardComp').addEventListener('click', gerarCardComp);
+
 
 setInterval(() => { if (SHEET_ID && $('#auto').checked && document.visibilityState==='visible') load(true); }, AUTO_MS);
 $('#reload').onclick = () => load();
@@ -955,7 +1049,7 @@ const sn = b => b ? 'Sim' : '';
 const cel = v => isNeg(v) ? '' : str(v);
 function linhasTabela(rs){
   return rs.map(r => { const x = r.raw;
-    return [r.fase, pv(r,'dep').join(' + '), pv(r,'dpa').join(' + '), pv(r,'delegacia').join(' + '), r.proc, r.nome, r.delitoRaw || r.delito, r.adol ? 'Adolescente' : 'Maior',
+    return [[...new Set(r.pl.map(periodoLabel))].join(' + '), pv(r,'dep').join(' + '), pv(r,'dpa').join(' + '), pv(r,'delegacia').join(' + '), r.proc, r.nome, r.delitoRaw || r.delito, r.adol ? 'Adolescente' : 'Maior',
       sn(r.mandado), sn(r.apf), sn(r.aaapai), sn(r.tc), sn(r.adolApre), sn(r.grp), sn(r.fianca), cel(r.reincEsp), cel(r.reincGen),
       cel(x[0]), cel(x[1]), cel(x[2]), cel(x[3]), cel(x[4]), cel(x[5]), cel(x[6]), cel(x[7]), cel(x[8]),
       cel(x[9]), cel(x[10]), cel(x[11])]; });
