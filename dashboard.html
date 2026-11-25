@@ -14,62 +14,89 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-:root{
-  --bg:#0a1128; --panel:#111b3a; --panel2:#16224a; --line:#26346a;
-  --text:#eef1fa; --muted:#9aa6c9; --gold:#f5c518; --gold2:#ffdd55;
-  --c1:#f5c518; --c2:#4ea3ff; --c3:#ff7a59; --c4:#34d399; --c5:#c084fc; --c6:#94a3b8;
-  --bad:#ff6b6b;
+:root,header,#login{   /* tema escuro (padrão das peças oficiais); cabeçalho e login ficam sempre escuros: logos são brancas */
+  color-scheme:dark;
+  --bg:#151615; --panel:#232323; --panel2:#2e2e2d; --line:#3a3a39; --bar:#1b1b1a; --hover:#2e2e2d;
+  --text:#ffffff; --muted:#c2c0bf; --primary:#8da6ca; --primary-fg:#151615; --gold:#ffce44; --gold2:#ffe08a;
+  --hero-bg:linear-gradient(135deg,#282829,#232323); --hero-v:#ffce44; --hero-t:#ffffff; --hero-s:#c2c0bf;
+  --c1:#ffce44; --c2:#8da6ca; --c3:#cd9a56; --c4:#5cbe62; --c5:#68aed6; --c6:#a6a4a3;
+  --bad:#ef7f76;
+}
+/* tema claro: tokens do Brandguide SEPOL (azul #193C6C, texto carvão, amarelo só como acento com texto escuro) */
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#ffffff; --panel:#f8f6f5; --panel2:#efebea; --line:#dcdad9; --bar:#f8f6f5; --hover:#efebea;
+  --text:#151615; --muted:#595857; --primary:#193c6c; --primary-fg:#ffffff;
+  --hero-bg:#ffce44; --hero-v:#151615; --hero-t:#151615; --hero-s:#3b3a39;
+  --bad:#a8181f;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 Inter,system-ui,Segoe UI,Arial,sans-serif}
-header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:18px 24px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#0d1636,#0a1128)}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 Verdana,Geneva,"DejaVu Sans",sans-serif}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:18px 24px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#1d1d1d,#151615)}
 .brand img{height:84px;width:auto;display:block}
 .inst{display:flex;align-items:center;gap:22px}
 .inst img{height:46px;width:auto;display:block}
 .inst .sep{width:1px;height:44px;background:var(--line)}
-.statusbar{display:flex;justify-content:flex-end;padding:10px 24px;border-bottom:1px solid var(--line);background:#0b1330}
+.statusbar{display:flex;justify-content:flex-end;padding:10px 24px;border-bottom:1px solid var(--line);background:var(--bar)}
 @media (max-width:700px){.brand img{height:64px}.inst img{height:34px}.inst{gap:14px}.statusbar{justify-content:flex-start;padding:10px 16px}}
 .printinfo{display:none}
 .printing .statusbar{display:block;padding:14px 24px 16px}
 .printing .status, .printing .filters{display:none!important}
 .printing .printinfo{display:block}
-.printinfo .aviso{display:inline-block;background:#f5efdc;color:#0a1128;font-weight:800;font-size:15px;padding:6px 16px;border-radius:8px;margin-bottom:12px}
+.printinfo .aviso{display:inline-block;background:#f5efdc;color:#151615;font-weight:800;font-size:15px;padding:6px 16px;border-radius:8px;margin-bottom:12px}
 .printinfo .meta{color:var(--muted);font-size:12px;margin-bottom:8px}
 .printinfo .chips{display:flex;flex-wrap:wrap;gap:8px}
 .printinfo .chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--text)}
 .printinfo .chip b{color:var(--gold);font-weight:700;margin-right:4px}
 /* ===== Card de balanço (arte para divulgação) ===== */
-#cardArte{position:fixed;left:-20000px;top:0;width:1086px;font-family:Montserrat,Inter,sans-serif;color:#fff;
-  background:radial-gradient(ellipse at 50% 30%,#13204f 0%,#0a1433 55%,#060c24 100%);padding:34px 54px 40px;box-sizing:border-box}
+#cardArte{position:fixed;left:-20000px;top:0;width:1086px;font-family:Verdana,Geneva,"DejaVu Sans",sans-serif;color:#fff;
+  background:radial-gradient(ellipse at 50% 30%,#282829 0%,#151615 55%,#0e0e0d 100%);padding:34px 54px 40px;box-sizing:border-box}
 #cardArte .topo{position:relative;height:250px;display:flex;justify-content:center;align-items:flex-start}
 #cardArte .topo .esp{height:240px}
 #cardArte .topo.comselo{justify-content:flex-start;padding-left:40px}
-#cardArte .topo .selo{position:absolute;right:-18px;top:8px;max-width:230px;border:3px solid #e8b923;border-radius:20px;padding:12px 16px;text-align:center;background:rgba(10,20,51,.6)}
-#cardArte .topo .selo .k{font-size:20px;font-weight:700;color:#e8b923;letter-spacing:1px}
+#cardArte .topo .selo{position:absolute;right:-18px;top:8px;max-width:230px;border:3px solid #ffce44;border-radius:20px;padding:12px 16px;text-align:center;background:rgba(10,20,51,.6)}
+#cardArte .topo .selo .k{font-size:20px;font-weight:700;color:#ffce44;letter-spacing:1px}
 #cardArte .topo .selo .v{font-size:40px;font-weight:900;color:#fff;line-height:1.05;margin-top:2px}
 #cardArte .topo .selo .v + .k{margin-top:10px}
-#cardArte .faixa{background:#f4eedb;color:#0a1433;border-radius:22px;text-align:center;font-weight:800;font-size:44px;padding:12px 20px;letter-spacing:.3px;white-space:nowrap}
+#cardArte .faixa{border-radius:22px;text-align:center;font-weight:800;font-size:44px;padding:12px 20px;letter-spacing:.3px;white-space:nowrap}
+/* 'Balanço parcial': sem fundo e discreto */
+#cardArte .faixa.bal{background:#ef7f76;color:#151615;border-radius:0;margin:0 -54px;padding:12px 0;font-weight:800;font-size:32px;letter-spacing:1.5px}   /* faixa de ponta a ponta, vermelho claro (vale nos dois temas) */
+/* adolescentes e dinheiro: mesmo desenho dos demais box (fundo escuro, linha dourada) */
+#cardArte .faixa.peq,#cardArte .faixa.din{background:none;color:#fff;border:3px solid #ffce44;border-radius:20px}
+#cardArte .faixa .n{font-weight:900;color:#ffce44;text-shadow:0 4px 0 #b8922a}
 #cardArte .faixa.peq{font-size:36px;padding:12px 18px}
-#cardArte .big{text-align:center;font-weight:900;font-size:270px;line-height:1;color:#f9c623;margin:18px 0 0;letter-spacing:-6px;
-  text-shadow:0 0 30px rgba(249,198,35,.35),0 6px 0 #c48d00}
+#cardArte .big{text-align:center;font-weight:900;font-size:270px;line-height:1;color:#ffce44;margin:18px 0 0;letter-spacing:-6px;
+  text-shadow:0 0 30px rgba(255,206,68,.35),0 6px 0 #b8922a}
 #cardArte .sub{text-align:center;font-weight:800;font-size:43px;margin:4px 0 20px;white-space:nowrap}
 #cardArte .duo{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:20px}
-#cardArte .box{border:3px solid #e8b923;border-radius:24px;text-align:center;padding:14px 10px 18px}
-#cardArte .box .n{font-weight:900;font-size:120px;line-height:1;color:#f9c623;text-shadow:0 5px 0 #c48d00}
+#cardArte .box{border:3px solid #ffce44;border-radius:24px;text-align:center;padding:14px 10px 18px}
+#cardArte .box .n{font-weight:900;font-size:120px;line-height:1;color:#ffce44;text-shadow:0 5px 0 #b8922a}
 #cardArte .box .t{font-weight:800;font-size:40px;margin-top:2px}
 #cardArte .div{display:flex;align-items:center;gap:22px;margin:26px 0 20px;font-weight:800;font-size:40px;letter-spacing:.5px}
-#cardArte .div::before,#cardArte .div::after{content:"";flex:1;height:4px;background:#e8b923;border-radius:2px}
+#cardArte .div::before,#cardArte .div::after{content:"";flex:1;height:4px;background:#ffce44;border-radius:2px}
 #cardArte .tiles{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin-bottom:20px}
-#cardArte .tile{border:3px solid #e8b923;border-radius:20px;display:flex;align-items:center;justify-content:center;gap:16px;padding:8px 14px;min-height:92px}
+#cardArte .tile{border:3px solid #ffce44;border-radius:20px;display:flex;align-items:center;justify-content:center;gap:16px;padding:8px 14px;min-height:92px}
 #cardArte .tile.full{grid-column:1 / -1}
-#cardArte .tile .n{font-weight:900;font-size:78px;line-height:1;color:#f9c623;text-shadow:0 4px 0 #c48d00;white-space:nowrap}
+#cardArte .tile .n{font-weight:900;font-size:78px;line-height:1;color:#ffce44;text-shadow:0 4px 0 #b8922a;white-space:nowrap}
 #cardArte .tile .t{font-weight:800;font-size:33px;line-height:1.1}
 #cardArte .din{font-size:60px;font-weight:900;padding:14px 20px}
-#cardArte .rodape{display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:28px;color:#e8ecf8}
+#cardArte .rodape{display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:28px;color:#eceae9}
 #cardArte .rodape .logos{display:flex;align-items:center;justify-content:center;gap:30px}
-#cardArte .rodape .sep{width:2px;height:66px;background:rgba(232,185,35,.6)}
+#cardArte .rodape .sep{width:2px;height:66px;background:rgba(255,206,68,.6)}
 #cardArte .rodape i{font-family:Montserrat,sans-serif;font-style:italic;font-weight:500;font-size:28px}
 #cardArte .rodape img{height:70px}
+/* ----- card no tema claro: miolo branco; topo e rodapé em faixas carvão (as logos são brancas) ----- */
+#cardArte.claro{background:#fff;color:#151615}
+#cardArte.claro .topo{background:#151615;margin:-34px -54px 0;padding-top:34px;height:284px}
+#cardArte.claro .topo.comselo{padding-left:94px}
+#cardArte.claro .topo .selo{right:54px}
+#cardArte.claro .big{background:#ffce44;color:#151615;border-radius:28px;text-shadow:none;padding:0 0 12px}
+#cardArte.claro .sub{color:#151615}
+#cardArte.claro .box,#cardArte.claro .tile,#cardArte.claro .faixa.peq,#cardArte.claro .faixa.din{background:#f8f6f5;border-color:#193c6c;color:#151615}
+#cardArte.claro .box .n,#cardArte.claro .tile .n,#cardArte.claro .faixa .n{color:#193c6c;text-shadow:none}
+#cardArte.claro .div{color:#151615}
+#cardArte.claro .div::before,#cardArte.claro .div::after{background:#193c6c}
+#cardArte.claro .rodape{background:#151615;margin:28px -54px -40px;padding:26px 0 30px}
 .toast{position:fixed;right:16px;bottom:16px;z-index:20;max-width:420px;background:var(--panel2);border:1px solid var(--gold);border-radius:10px;padding:12px 14px;font-size:13px;box-shadow:0 8px 24px #0008}
 .toast a{color:var(--gold);font-weight:700}
 .toast button{margin-left:6px;padding:2px 8px}
@@ -77,23 +104,25 @@ header{display:flex;align-items:center;justify-content:space-between;gap:16px;fl
 button,.btn{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font:inherit;font-weight:600;cursor:pointer}
 button:hover{border-color:var(--gold)}
 button.primary{background:var(--gold);color:#111;border-color:var(--gold)}
+#reload.primary,.tbltools button.primary{background:var(--primary);color:var(--primary-fg);border-color:var(--primary)}
 main{padding:20px 24px 40px;max-width:1500px;margin:0 auto}
-footer{border-top:1px solid var(--line);background:#0b1330;color:var(--muted);font-size:12px;text-align:center;padding:16px 24px}
+footer{border-top:1px solid var(--line);background:var(--bar);color:var(--muted);font-size:12px;text-align:center;padding:16px 24px}
 .filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:20px}
 .filters label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
 select,input{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit}
 select:focus,input:focus{outline:2px solid var(--gold);outline-offset:-1px}
 .filters .actions{display:flex;align-items:flex-end}
 .filters .actions button{width:100%}
-h2{font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--gold);margin:26px 0 10px;display:flex;align-items:center;gap:10px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--primary);margin:26px 0 10px;display:flex;align-items:center;gap:10px}
 h2::after{content:"";flex:1;height:1px;background:var(--line)}
 .kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}   /* 2 linhas × 5 caixas */
 @media (max-width:640px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 14px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-width:0}
-.kpi.hero{border-color:var(--gold);background:linear-gradient(135deg,#1a2550,#111b3a)}
-.kpi .v{font-size:clamp(20px,2.3vw,28px);font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;line-height:1.1;white-space:nowrap}
-.kpi.hero .v{font-size:clamp(30px,3.2vw,40px)}
+.kpi.hero{border-color:var(--gold);background:var(--hero-bg)}
+.kpi.hero .l{color:var(--hero-t)}.kpi.hero .s{color:var(--hero-s)}
+.kpi .v{font-size:clamp(20px,2.3vw,28px);font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;line-height:1.1;white-space:nowrap}
+.kpi.hero .v{font-size:clamp(30px,3.2vw,40px);color:var(--hero-v)}
 .kpi .v .u{font-size:.55em;font-weight:700}
 .kpi .l{color:var(--text);font-weight:600;font-size:13px;margin-top:6px;line-height:1.3}
 .kpi .s{color:var(--muted);font-size:12px;margin-top:3px;line-height:1.35}
@@ -102,22 +131,29 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
 .card h3{margin:0 0 10px;font-size:14px;font-weight:700}
 .chart{position:relative;height:300px}
 .chart.tall{height:420px}
+.tbltools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.tbltools .cnt{color:var(--muted);font-size:12px;margin-right:auto}
+th .arr{color:var(--primary);margin-left:4px}
+.printing #h2Tabela,.printing #cardTabela{display:none!important}
 .tablewrap{overflow:auto;max-height:560px;border:1px solid var(--line);border-radius:10px}
 table{border-collapse:collapse;width:100%;font-size:12.5px}
 th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
 th{position:sticky;top:0;background:var(--panel2);cursor:pointer;user-select:none;font-weight:600;color:var(--muted)}
 td.n{text-align:right;font-variant-numeric:tabular-nums}
-tr:hover td{background:#16224a}
-.tag{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:600;background:#26346a;margin-right:3px}
-.tag.m{background:#4ea3ff33;color:#9ccaff}.tag.a{background:#f5c51833;color:var(--gold2)}.tag.ad{background:#ff7a5933;color:#ffb39f}.tag.tc{background:#34d39933;color:#86efac}
+tr:hover td{background:var(--hover)}
+.tag{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:600;background:var(--line);margin-right:3px}
+.tag.m{background:#8da6ca33;color:#b7c6de}.tag.a{background:#5cbe6233;color:#a7dcab}.tag.ad{background:#cd9a5633;color:#e0c39a}.tag.tc{background:#68aed633;color:#b3d6ea}
+:root[data-theme="light"] .tag.m{background:#193c6c1a;color:#193c6c}:root[data-theme="light"] .tag.a{background:#289b381f;color:#026b1a}
+:root[data-theme="light"] .tag.ad{background:#935c241f;color:#7a4c1d}:root[data-theme="light"] .tag.tc{background:#00719d1a;color:#00597a}
+#tema{display:inline-flex;align-items:center;gap:6px}
 .toolbar{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
 .toolbar input{max-width:360px}
 .note{color:var(--muted);font-size:12px;margin-top:8px}
 ul.obs{margin:0;padding-left:18px;color:var(--muted);font-size:12.5px}
-#overlay{position:fixed;inset:0;background:#0a1128ee;display:flex;align-items:center;justify-content:center;z-index:9;flex-direction:column;gap:14px;text-align:center;padding:20px}
+#overlay{position:fixed;inset:0;background:color-mix(in srgb,var(--bg) 93%,transparent);display:flex;align-items:center;justify-content:center;z-index:9;flex-direction:column;gap:14px;text-align:center;padding:20px}
 #overlay.hide{display:none}
 #login{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:16px;
-  background:radial-gradient(120% 120% at 50% 0,#16245a,#0a1128 60%)}
+  background:radial-gradient(120% 120% at 50% 0,#282829,#151615 60%)}
 #login.hide{display:none}
 #loginForm{width:100%;max-width:380px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:16px;
   padding:28px 26px 22px;box-shadow:0 24px 70px #0009;text-align:center}
@@ -168,6 +204,7 @@ ul.obs{margin:0;padding-left:18px;color:var(--muted);font-size:12.5px}
   <div class="status">
     <span id="upd">—</span>
     <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="auto" style="width:auto" checked> atualizar a cada 5 min</label>
+    <button id="tema" type="button" title="Alternar entre tema escuro e claro" aria-label="Alternar tema"></button>
     <button id="reload" class="primary">↻ Atualizar dados</button>
     <button id="print">📄 Gerar PDF</button>
     <button id="card">🖼️ Gerar Card</button>
@@ -211,6 +248,17 @@ ul.obs{margin:0;padding-left:18px;color:var(--muted);font-size:12.5px}
 
   <h2>Outros itens apreendidos (texto livre)</h2>
   <div class="card"><ul class="obs" id="obs"></ul></div>
+
+  <h2 id="h2Tabela">Registros detalhados</h2>
+  <div class="card" id="cardTabela">
+    <div class="tbltools">
+      <span class="cnt" id="tblCount"></span>
+      <button id="dlXlsx" class="primary" type="button">⬇ Baixar tabela (.xlsx)</button>
+      <button id="dlCsv" type="button">⬇ Baixar .csv</button>
+    </div>
+    <div class="tablewrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+    <div class="note">A tabela e os arquivos baixados respeitam os filtros aplicados.</div>
+  </div>
 
   <p class="note">
     Fonte: abas de departamento da planilha (a aba SSPIO é ignorada por ser consolidação). Pessoas repetidas (mesmo procedimento + nome) contam uma vez.
@@ -428,14 +476,35 @@ function refreshOptions(){
 const kpiVal = v => String(v).replace(/^R\$\s?/, () => '<span class="u">R$ </span>').replace(/\s?(kg|g)$/, (_, u) => `<span class="u"> ${u}</span>`);
 const kpi = (v,l,s='',hero=false) => `<div class="kpi${hero?' hero':''}"><div class="v">${kpiVal(v)}</div><div class="l">${l}</div>${s?`<div class="s">${s}</div>`:''}</div>`;
 let charts = {};
-Chart.defaults.color = '#9aa6c9'; Chart.defaults.borderColor = '#26346a'; Chart.defaults.font.family = 'Inter, system-ui';
+Chart.defaults.font.family = 'Verdana, Geneva, sans-serif';
 function chart(id, cfg){ charts[id]?.destroy(); charts[id] = new Chart(document.getElementById(id), cfg); }
-const C = ['#f5c518','#4ea3ff','#ff7a59','#34d399','#c084fc','#94a3b8'];
+const THEMES = {
+  dark:  {bg:'#151615', muted:'#c2c0bf', text:'#ffffff', grid:'#2a2a29', div:'#4a4a48', stripe:'rgba(255,255,255,.025)', rank:'#8da6ca',
+          C:['#8da6ca','#5cbe62','#cd9a56','#68aed6','#c6a144','#a6a4a3']},
+  light: {bg:'#ffffff', muted:'#595857', text:'#151615', grid:'#e6e3e2', div:'#c9c6c5', stripe:'rgba(21,22,21,.035)', rank:'#193c6c',
+          C:['#193c6c','#289b38','#935c24','#00719d','#c6a144','#8a8987']}   // série oficial do tema claro
+};
+let TEMA = 'dark';
+const T = () => THEMES[TEMA];
+const C = [...THEMES.dark.C];   // azul, verde, bronze, petróleo, ouro, cinza (trocada no lugar ao mudar o tema)
+// cor do texto (escuro/claro) que garante contraste sobre uma barra
+const textoSobre = hex => { const n = parseInt(String(hex).slice(1), 16), L = (0.2126*(n>>16&255) + 0.7152*(n>>8&255) + 0.0722*(n&255)) / 255; return L > 0.5 ? '#151615' : '#ffffff'; };
+function aplicarTema(t, redesenhar){
+  TEMA = THEMES[t] ? t : 'dark';
+  document.documentElement.setAttribute('data-theme', TEMA);
+  C.splice(0, C.length, ...T().C);
+  Chart.defaults.color = T().muted; Chart.defaults.borderColor = T().grid;
+  const b = document.getElementById('tema'); if (b) b.textContent = TEMA === 'dark' ? '☀ Modo claro' : '☾ Modo escuro';
+  try{ localStorage.setItem('esp_tema', TEMA); }catch(_){}
+  if (redesenhar) render();
+}
+(function(){ let s = null; try{ s = localStorage.getItem('esp_tema'); }catch(_){} aplicarTema(s === 'light' ? 'light' : 'dark', false); })();
+document.getElementById('tema').addEventListener('click', () => aplicarTema(TEMA === 'dark' ? 'light' : 'dark', true));
 function groupCount(rs, key){ const m = {}; for (const r of rs){ const k = r[key]; m[k] = (m[k]||0)+1; } return Object.entries(m).sort((a,b)=>b[1]-a[1]); }
 function stackedBy(rs, key, top, force=[]){
   const g = groupCount(rs,key).slice(0, top||999).map(e=>e[0]);
   for (const f of [...force].sort(natSort)) if (!g.includes(f)) g.push(f);   // itens forçados (zerados) ao final
-  const ds = [['Mandado','mandado',C[1]],['APF','apf',C[0]],['AAAPAI','aaapai',C[2]],['TC','tc',C[3]]].map(([label,f,color])=>({
+  const ds = [['Mandado','mandado',C[0]],['APF','apf',C[1]],['AAAPAI','aaapai',C[2]],['TC','tc',C[3]]].map(([label,f,color])=>({
     label, backgroundColor:color, borderRadius:3, data:g.map(k=>rs.filter(r=>r[key]===k && r[f]).length)}));
   ds.push({label:'Outros', backgroundColor:C[5], borderRadius:3, data:g.map(k=>rs.filter(r=>r[key]===k && !r.mandado&&!r.apf&&!r.aaapai&&!r.tc).length)});
   return {labels:g, datasets:ds};
@@ -448,9 +517,9 @@ const COL_RANK = 50, HEAD_H = 24;
 function colName(chart){
   const o = chart.options.plugins.rankCols || {}, ctx = chart.ctx;
   ctx.save();
-  ctx.font = '600 12px Inter, system-ui';
+  ctx.font = '600 12px Verdana, Geneva, sans-serif';
   let w = Math.max(0, ...(o.names||[]).map(n => ctx.measureText(n).width));
-  ctx.font = '600 10.5px Inter, system-ui';
+  ctx.font = '600 10.5px Verdana, Geneva, sans-serif';
   w = Math.max(w, ctx.measureText((o.title||'').toUpperCase()).width);
   ctx.restore();
   return Math.min(Math.ceil(w) + 22, chart.width * 0.45);
@@ -468,24 +537,24 @@ const rankColsPlugin = {
     const nameW = colName(chart), x0 = 4, xDiv1 = x0 + COL_RANK, xDiv2 = xDiv1 + nameW;
     ctx.save();
     // cabeçalhos
-    ctx.font = '600 10.5px Inter, system-ui'; ctx.fillStyle = '#9aa6c9'; ctx.textBaseline = 'middle';
+    ctx.font = '600 10.5px Verdana, Geneva, sans-serif'; ctx.fillStyle = T().muted; ctx.textBaseline = 'middle';
     const hy = ca.top - HEAD_H/2 - 2;
     ctx.textAlign = 'center'; ctx.fillText('RANK', x0 + COL_RANK/2, hy);
     ctx.textAlign = 'left';   ctx.fillText((o.title||'').toUpperCase(), xDiv1 + 10, hy);
     ctx.textAlign = 'right';  ctx.fillText('TOTAL ▸', ca.right, hy);
     // divisórias
-    ctx.strokeStyle = '#2f3f7a'; ctx.lineWidth = 1;
+    ctx.strokeStyle = T().div; ctx.lineWidth = 1;
     for (const xx of [xDiv1, xDiv2]){ ctx.beginPath(); ctx.moveTo(xx+.5, ca.top - HEAD_H); ctx.lineTo(xx+.5, ca.bottom); ctx.stroke(); }
     ctx.beginPath(); ctx.moveTo(x0, ca.top - 3.5); ctx.lineTo(ca.right, ca.top - 3.5); ctx.stroke();
     // linhas
     o.names.forEach((n,i) => {
       const yy = y.getPixelForValue(i);
-      if (i % 2 === 0){ ctx.fillStyle = 'rgba(255,255,255,.025)'; const h = y.height / o.names.length; ctx.fillRect(x0, yy - h/2, ca.right - x0, h); }
-      ctx.font = '800 12.5px Inter, system-ui'; ctx.fillStyle = i < 3 ? '#f5c518' : '#9aa6c9'; ctx.textAlign = 'center';
+      if (i % 2 === 0){ ctx.fillStyle = T().stripe; const h = y.height / o.names.length; ctx.fillRect(x0, yy - h/2, ca.right - x0, h); }
+      ctx.font = '800 12.5px Verdana, Geneva, sans-serif'; ctx.fillStyle = i < 3 ? T().rank : T().muted; ctx.textAlign = 'center';
       ctx.fillText(`${i+1}º`, x0 + COL_RANK/2, yy);
-      ctx.font = '600 12px Inter, system-ui'; ctx.fillStyle = '#eef1fa'; ctx.textAlign = 'left';
+      ctx.font = '600 12px Verdana, Geneva, sans-serif'; ctx.fillStyle = T().text; ctx.textAlign = 'left';
       ctx.fillText(fitText(ctx, n, nameW - 18), xDiv1 + 10, yy);
-      ctx.font = '700 12px Inter, system-ui'; ctx.fillStyle = '#eef1fa';
+      ctx.font = '700 12px Verdana, Geneva, sans-serif'; ctx.fillStyle = T().text;
       ctx.fillText((o.fmt||fmt)(o.totals[i]), x.getPixelForValue(o.totals[i]) + 6, yy);
     });
     ctx.restore();
@@ -499,14 +568,14 @@ function hbar(id, names, totals, datasets, {stacked=false, legend=false, fmtVal=
   chart(id, {type:'bar', data:{labels:names, datasets:datasets.map(d=>({borderRadius:3, barPercentage:.8, categoryPercentage:.9, ...d}))},
     options:{responsive:true, maintainAspectRatio:false, indexAxis:'y',
       layout:{padding:{left:0, top:HEAD_H, right:8}},
-      scales:{x:{stacked, beginAtZero:true, grace:'14%', grid:{color:'#1c2852'}, ticks:{callback:v=>fmtVal(v)}},
+      scales:{x:{stacked, beginAtZero:true, grace:'14%', grid:{color:T().grid}, ticks:{callback:v=>fmtVal(v)}},
               y:{stacked, grid:{display:false}, border:{display:false},
                  afterFit:s => { s.width = 4 + COL_RANK + colName(s.chart) + 6; }, ticks:{display:false}}},
       plugins:{
         rankCols:{names, totals, title, fmt:fmtVal},
         legend:{display:legend, position:'bottom', labels:{boxWidth:12}},
         tooltip:{callbacks:{title:c=>`${c[0].dataIndex+1}º · ${names[c[0].dataIndex]}`, label:c=>`${c.dataset.label}: ${fmtVal(c.raw)}`}},
-        datalabels:{display:c=>c.dataset.data[c.dataIndex]>0, color:'#0a1128', anchor:'center', align:'center', clamp:true,
+        datalabels:{display:c=>c.dataset.data[c.dataIndex]>0, color:c=>{ const b = c.dataset.backgroundColor; return textoSobre(Array.isArray(b) ? b[c.dataIndex] : b); }, anchor:'center', align:'center', clamp:true,
           font:{weight:700, size:11}, formatter:v=>fmtVal(v)}}}});
 }
 function hbarStacked(id, rs, key, top, title, force){
@@ -557,11 +626,12 @@ function render(){
   hbarStacked('chRisp', VIEW, 'dpa', 0, 'DPA', F.risp.value ? [] : [1,2,3,4,5,6,7,8].map(n=>`${n}º DPA`));
   hbarStacked('chDel',  VIEW, 'delegacia', 10, 'Delegacia');
   hbarSimple('chDelito', groupCount(VIEW,'delito').slice(0,10), null, {label:'Pessoas', title:'Delito'});
-  hbarSimple('chIdade', [['Maiores de idade',a.adultos],['Adolescentes',a.adol]], {'Maiores de idade':C[1],'Adolescentes':C[2]}, {label:'Pessoas', title:'Faixa etária'});
+  hbarSimple('chIdade', [['Maiores de idade',a.adultos],['Adolescentes',a.adol]], {'Maiores de idade':C[0],'Adolescentes':C[2]}, {label:'Pessoas', title:'Faixa etária'});
   const gfmt = v => grams(v).replace(/\s/,' ');
-  hbarSimple('chDrogas', Object.entries(a.drogas), {Maconha:C[3],'Cocaína':C[1],Crack:C[2],Outros:C[5]}, {label:'Peso', fmtVal:gfmt, title:'Substância'});
+  hbarSimple('chDrogas', Object.entries(a.drogas), {Maconha:C[1],'Cocaína':C[0],Crack:C[2],Outros:C[5]}, {label:'Peso', fmtVal:gfmt, title:'Substância'});
 
   $('#obs').innerHTML = a.obs.length ? a.obs.map(o=>`<li>${esc(o.t)} — <span>${esc(o.r.delegacia)} · ${esc(o.r.proc)}</span></li>`).join('') : '<li>Nenhum item em texto livre no filtro atual.</li>';
+  renderTabela();
   fitKpis();
 }
 // número de cada KPI no maior tamanho que cabe (~85% da largura útil da caixa), com teto
@@ -663,7 +733,7 @@ async function gerarPrint(){
     window.scrollTo(0, 0);   // evita deslocamento/faixa vazia no topo da imagem
     const SCALE = 2; let breaks = [], headEnd = 0;
     const canvas = await html2canvas(document.body, {
-      backgroundColor:'#0a1128', scale:SCALE, useCORS:true, logging:false,
+      backgroundColor:T().bg, scale:SCALE, useCORS:true, logging:false,
       windowWidth: document.documentElement.clientWidth,
       onclone: doc => {
         doc.body.classList.add('printing'); doc.getElementById('overlay')?.remove();
@@ -684,7 +754,7 @@ async function gerarPrint(){
     const pxPerMm = canvas.width / CW;
     const crop = (y0, y1) => {
       const c = document.createElement('canvas'); c.width = canvas.width; c.height = y1 - y0;
-      const x = c.getContext('2d'); x.fillStyle = '#0a1128'; x.fillRect(0,0,c.width,c.height);
+      const x = c.getContext('2d'); x.fillStyle = T().bg; x.fillRect(0,0,c.width,c.height);
       x.drawImage(canvas, 0, y0, canvas.width, y1 - y0, 0, 0, canvas.width, y1 - y0);
       return c.toDataURL('image/jpeg', 0.92);
     };
@@ -753,19 +823,20 @@ function montarCard(){
   const sspSrc = document.querySelector('.inst img[alt^="SSPIO"]').src;
   const tiles = d.itens.map(([n,t], i) =>
     `<div class="tile${i === d.itens.length-1 && d.itens.length % 2 ? ' full' : ''}"><span class="n">${n}</span><span class="t">${t}</span></div>`).join('');
+  $('#cardArte').className = TEMA === 'light' ? 'claro' : '';   // o card segue o tema ativo no momento da geração
   $('#cardArte').innerHTML = `
     <div class="topo${selo ? ' comselo' : ''}"><img class="esp" src="${espSrc}">${selo ? `<div class="selo">${selo}</div>` : ''}</div>
-    <div class="faixa">BALANÇO PARCIAL ATÉ ${p(agora.getDate())}/${p(agora.getMonth()+1)} ÀS ${p(agora.getHours())}H${p(agora.getMinutes())}</div>
+    <div class="faixa bal">BALANÇO PARCIAL ATÉ ${p(agora.getDate())}/${p(agora.getMonth()+1)} ÀS ${p(agora.getHours())}H${p(agora.getMinutes())}</div>
     <div class="big">${fmt(d.total)}</div>
     <div class="sub">PESSOAS COM INDICAÇÃO DE PRISÃO</div>
     <div class="duo">
       <div class="box"><div class="n">${fmt(d.mandado)}</div><div class="t">por mandado</div></div>
       <div class="box"><div class="n">${fmt(d.apf)}</div><div class="t">vinculadas a APF</div></div>
     </div>
-    <div class="faixa peq"><b style="font-size:46px">${fmt(d.adolApre)}</b> ${d.adolApre === 1 ? 'adolescente permaneceu apreendido' : 'adolescentes permaneceram apreendidos'}</div>
+    <div class="faixa peq"><span class="n" style="font-size:56px">${fmt(d.adolApre)}</span> ${d.adolApre === 1 ? 'adolescente permaneceu apreendido' : 'adolescentes permaneceram apreendidos'}</div>
     ${d.itens.length || d.dinheiro ? '<div class="div">APREENSÕES E RECUPERAÇÕES</div>' : ''}
     <div class="tiles">${tiles}</div>
-    ${d.dinheiro ? `<div class="faixa din">${brl(d.dinheiro)} em dinheiro</div>` : ''}
+    ${d.dinheiro ? `<div class="faixa din"><span class="n">${brl(d.dinheiro)}</span> em dinheiro</div>` : ''}
     <div class="rodape"><div class="logos"><img src="${pcSrc}"><span class="sep"></span><img src="${sspSrc}"></div><i>Dados parciais sujeitos a conferência</i></div>`;
   return agora;
 }
@@ -776,7 +847,7 @@ async function gerarCard(){
     const agora = montarCard();
     await Promise.all([document.fonts.load('900 100px Montserrat'), document.fonts.load('800 50px Montserrat'), document.fonts.load('italic 500 28px Montserrat')]);
     await Promise.all([...document.querySelectorAll('#cardArte img')].map(i => i.decode().catch(()=>{})));
-    const canvas = await html2canvas($('#cardArte'), {backgroundColor:'#0a1433', scale:1, useCORS:true, logging:false,
+    const canvas = await html2canvas($('#cardArte'), {backgroundColor: TEMA === 'light' ? '#ffffff' : '#151615', scale:1, useCORS:true, logging:false,
       onclone: doc => { const c = doc.getElementById('cardArte'); c.style.left = '0'; c.style.position = 'absolute'; }});
     const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
     const p = n => String(n).padStart(2,'0');
@@ -788,6 +859,50 @@ $('#card').addEventListener('click', gerarCard);
 
 setInterval(() => { if (SHEET_ID && $('#auto').checked && document.visibilityState==='visible') load(true); }, AUTO_MS);
 $('#reload').onclick = () => load();
+
+
+/* ============ TABELA GERAL (exibição + download) ============ */
+const TCOLS = ['Fase','Departamento','DPA','Delegacia','Procedimento','Nome','Delito','Faixa etária',
+  'Mandado','APF','AAAPAI','TC','Adol. apreendido','GRP','Fiança','Reinc. específica','Reinc. genérica',
+  'Maconha','Cocaína','Crack','Outras drogas','Revólver','Pistola','Escopeta','Fuzil','Outras armas / munição',
+  'Dinheiro','Veículos','Celular'];
+const sn = b => b ? 'Sim' : '';
+const cel = v => isNeg(v) ? '' : str(v);
+function linhasTabela(rs){
+  return rs.map(r => { const x = r.raw;
+    return [r.fase, r.dep, r.dpa, r.delegacia, r.proc, r.nome, r.delitoRaw || r.delito, r.adol ? 'Adolescente' : 'Maior',
+      sn(r.mandado), sn(r.apf), sn(r.aaapai), sn(r.tc), sn(r.adolApre), sn(r.grp), sn(r.fianca), cel(r.reincEsp), cel(r.reincGen),
+      cel(x[0]), cel(x[1]), cel(x[2]), cel(x[3]), cel(x[4]), cel(x[5]), cel(x[6]), cel(x[7]), cel(x[8]),
+      cel(x[9]), cel(x[10]), cel(x[11])]; });
+}
+let TSORT = {i:-1, dir:1};
+function renderTabela(){
+  const rows = linhasTabela(VIEW);
+  if (TSORT.i >= 0) rows.sort((a,b) => TSORT.dir * String(a[TSORT.i]).localeCompare(String(b[TSORT.i]), 'pt-BR', {numeric:true}));
+  $('#tbl thead').innerHTML = '<tr>' + TCOLS.map((c,i) => `<th data-i="${i}">${esc(c)}${TSORT.i===i ? `<span class="arr">${TSORT.dir>0?'▲':'▼'}</span>` : ''}</th>`).join('') + '</tr>';
+  $('#tbl tbody').innerHTML = rows.map(r => '<tr>' + r.map((v,i) => {
+    if (i>=8 && i<=14 && v) return `<td><span class="tag ${['m','a','ad','tc','','',''][i-8]}">${esc(v)}</span></td>`;
+    return `<td>${esc(v)}</td>`; }).join('') + '</tr>').join('');
+  $('#tblCount').textContent = `${fmt(rows.length)} registro${rows.length===1?'':'s'} no filtro atual`;
+}
+$('#tbl thead').addEventListener('click', e => {
+  const th = e.target.closest('th'); if (!th) return;
+  const i = +th.dataset.i; TSORT = {i, dir: TSORT.i === i ? -TSORT.dir : 1}; renderTabela();
+});
+const nomeArquivo = ext => `espoliador_registros_${new Date().toISOString().slice(0,10)}.${ext}`;
+$('#dlXlsx').onclick = () => {
+  const aoa = [TCOLS, ...linhasTabela(VIEW)];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = TCOLS.map((c,i) => ({wch: [5,6,11,12,22,32,28].includes(i) ? 24 : Math.max(10, c.length + 2)}));
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Registros');
+  XLSX.writeFile(wb, nomeArquivo('xlsx'));
+};
+$('#dlCsv').onclick = () => {
+  const q = v => '"' + String(v).replace(/"/g,'""') + '"';
+  const csv = '\ufeff' + [TCOLS, ...linhasTabela(VIEW)].map(r => r.map(q).join(';')).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'}));
+  a.download = nomeArquivo('csv'); document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
 
 /* ============ LOGIN ============ */
 const b64d = t => Uint8Array.from(atob(t), c => c.charCodeAt(0));
