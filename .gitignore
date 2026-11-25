@@ -1,0 +1,6 @@
+# Publica SOMENTE o painel. Todo o resto da pasta (imagens da operação, scripts locais,
+# versão Apps Script, configurações) fica fora do repositório.
+*
+!.gitignore
+!index.html
+!dashboard.html
