@@ -132,6 +132,19 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
 .card h3{margin:0 0 10px;font-size:14px;font-weight:700}
 .chart{position:relative;height:300px}
 .chart.tall{height:420px}
+.totTip{position:fixed;z-index:60;pointer-events:none;display:none;max-width:290px;background:var(--panel2);color:var(--text);border:1px solid var(--primary);
+  border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.5;box-shadow:0 10px 30px #0006}
+.totTip b{font-variant-numeric:tabular-nums}
+.totTip .nm{font-weight:700;margin-bottom:4px}
+.totTip .row{display:flex;justify-content:space-between;gap:16px}
+.totTip small{display:block;margin-top:6px;color:var(--muted);font-size:11px;line-height:1.4}
+.pager{display:flex;align-items:center;justify-content:space-between;gap:10px 16px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.pager .pginfo{color:var(--muted);font-size:12px}
+.pager .pgbtns{display:flex;gap:6px;flex-wrap:wrap}
+.pager button{min-width:34px;padding:5px 9px;font-size:12px}
+.pager button[aria-current="page"]{background:var(--primary);color:var(--primary-fg);border-color:var(--primary)}
+.pager button:disabled{opacity:.4;cursor:default}
+.printing .pager{display:none!important}
 .tbltools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 .tbltools .cnt{color:var(--muted);font-size:12px;margin-right:auto}
 th .arr{color:var(--primary);margin-left:4px}
@@ -243,9 +256,9 @@ ul.obs{margin:0;padding-left:18px;color:var(--muted);font-size:12.5px}
 
   <h2>Análises</h2>
   <div class="grid">
-    <div class="card"><h3>Registros por departamento</h3><div class="chart"><canvas id="chDep"></canvas></div></div>
-    <div class="card"><h3>Registros por DPA (RISP)</h3><div class="chart"><canvas id="chRisp"></canvas></div></div>
-    <div class="card"><h3>TOP 10 Delegacias com mais registros</h3><div class="chart tall"><canvas id="chDel"></canvas></div></div>
+    <div class="card"><h3>Pessoas e Prisões/Apreensões por Departamento</h3><div class="chart"><canvas id="chDep"></canvas></div></div>
+    <div class="card"><h3>Pessoas e Prisões/Apreensões por DPA (RISP)</h3><div class="chart"><canvas id="chRisp"></canvas></div></div>
+    <div class="card"><h3>Pessoas e Prisões/Apreensões por Delegacia (CISP)</h3><div class="chart tall"><canvas id="chDel"></canvas></div><div class="pager" id="pgDel"></div></div>
     <div class="card"><h3>TOP 10 Delitos mais frequentes</h3><div class="chart tall"><canvas id="chDelito"></canvas></div></div>
     <div class="card"><h3>Maiores × adolescentes</h3><div class="chart"><canvas id="chIdade"></canvas></div></div>
     <div class="card"><h3>Entorpecentes apreendidos</h3><div class="chart"><canvas id="chDrogas"></canvas></div></div>
@@ -266,7 +279,7 @@ ul.obs{margin:0;padding-left:18px;color:var(--muted);font-size:12.5px}
   </div>
 
   <p class="note">
-    Fonte: abas de departamento da planilha (a aba SSPIO é ignorada por ser consolidação). Pessoas repetidas (mesmo procedimento + nome) contam uma vez.
+    Fonte: abas de departamento da planilha (a aba SSPIO é ignorada por ser consolidação). Pessoas repetidas (mesmo RO + nome, inclusive entre departamentos) contam uma vez, somando as marcas de todas as linhas; sem nome, o RO conta como uma pessoa "Não identificado".
     Pesos de drogas, dinheiro e itens descritos em texto repetidos no mesmo procedimento (co-autores) contam uma vez; armas, veículos e celulares somam por pessoa.
     "Fase preparatória" = linhas acima da marcação "ESPOLIADOR DIA D" em cada aba; "Dia D" = linhas abaixo.
   </p>
@@ -296,6 +309,8 @@ const fmt = n => (n||0).toLocaleString('pt-BR');
 const brl = n => (n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const grams = g => g >= 1000 ? (g/1000).toLocaleString('pt-BR',{maximumFractionDigits:2})+' kg' : (g||0).toLocaleString('pt-BR',{maximumFractionDigits:1})+' g';
 const str = v => v == null ? '' : String(v).replace(/\s+/g,' ').trim();
+const NAO_ID = 'Não identificado';
+const semNome = n => !n || n === '(sem nome)' || /^n[aã]o\s+identificad[oa]s?$/i.test(n);
 const isYes = v => /^(s|sim|sm)\b/i.test(str(v));
 const isNeg = v => /^(n[aã]o|nao|-+|0|n[aã]o se aplica)?$/i.test(str(v));
 const esc = s => str(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -369,7 +384,7 @@ function parseWorkbook(wb){
       out.push({
         id: name+'!'+(i+1), dep: name.trim().toUpperCase(), fase,
         dpa: normDPA(r[0]), delegacia: del.nome, cisp: del.cisp,
-        proc: str(r[2]).replace(/^\*\s*/,''), nome: str(r[8]) || '(sem nome)',
+        proc: str(r[2]).replace(/^\*\s*/,''), nome: semNome(str(r[8])) ? NAO_ID : str(r[8]),
         mandado: isYes(r[3]), apf: isYes(r[4]), aaapai: isYes(r[5]), tc: isYes(r[6]),
         delitoRaw: str(r[7]), delito: normDelito(r[7]),
         adol: isYes(r[9]) || isYes(r[5]), adolApre: isYes(r[10]), grp: isYes(r[11]), fianca: isYes(r[12]),
@@ -380,20 +395,26 @@ function parseWorkbook(wb){
       if (dateCol >= 0) HAS_DATE = true;
     }
   }
-  // dedup pessoa (mesmo procedimento + nome)
-  // linhas repetidas da mesma pessoa são mescladas (flags em OU; apreensões: primeiro valor preenchido)
+  // dedup pessoa: mesmo RO + nome, ENTRE departamentos. Sem nome (ou "não identificado") = uma única pessoa "Não identificado" por RO.
+  // linhas repetidas são mescladas (flags em OU; apreensões: primeiro valor preenchido); a pessoa fica no 1º departamento em que aparece
+  out.forEach(r => { r.pl = [{dep:r.dep, dpa:r.dpa, delegacia:r.delegacia, cisp:r.cisp, aisp:''}]; });   // locais onde a pessoa aparece
   const seen = new Map();
   RECORDS = out.filter(r => {
-    const k = r.dep+'|'+r.proc+'|'+r.nome.toUpperCase();
-    if (r.nome==='(sem nome)' || !seen.has(k)){ seen.set(k, r); return true; }
+    const k = r.proc ? r.proc+'|'+r.nome.toUpperCase()                       // com RO: junta entre departamentos
+            : (r.nome === NAO_ID ? null : r.dep+'||'+r.nome.toUpperCase());    // sem RO: só dentro do próprio departamento
+    if (k === null || !seen.has(k)){ if (k !== null) seen.set(k, r); return true; }
     const p = seen.get(k);
+    if (!p.pl.some(x => x.dep === r.dep && x.dpa === r.dpa && x.delegacia === r.delegacia)) p.pl.push(r.pl[0]);   // aparece nos dois lados dos filtros
     for (const f of ['mandado','apf','aaapai','tc','adol','adolApre','grp','fianca']) p[f] = p[f] || r[f];
     r.raw.forEach((v,i) => { if (isNeg(p.raw[i]) && !isNeg(v)) p.raw[i] = v; });
     if (isNeg(p.reincEsp)) p.reincEsp = r.reincEsp; if (isNeg(p.reincGen)) p.reincGen = r.reincGen;
     return false;
   });
   RELACAO = rel;
-  for (const r of RECORDS){ const m = RELACAO[r.cisp]; r.aisp = m?.aisp ? `AISP ${m.aisp}` : ''; if (m?.risp && r.dpa.startsWith('Especial')) r.dpa = `${m.risp}`; }
+  for (const r of RECORDS){
+    for (const q of r.pl){ const m = RELACAO[q.cisp]; q.aisp = m?.aisp ? `AISP ${m.aisp}` : ''; if (m?.risp && q.dpa.startsWith('Especial')) q.dpa = `${m.risp}`; }
+    r.dpa = r.pl[0].dpa; r.aisp = r.pl[0].aisp;
+  }
 }
 function parseRelacao(rows){
   const h = rows.findIndex(r => r.some(c => /cisp/i.test(str(c))));
@@ -458,10 +479,10 @@ const natSort = (a,b) => a.localeCompare(b,'pt-BR',{numeric:true});
 function applyFilters(ignore){
   return RECORDS.filter(r =>
     (!F.fase.value || r.fase===F.fase.value) &&
-    (ignore==='dep'  || !F.dep.value  || r.dep===F.dep.value) &&
-    (ignore==='risp' || !F.risp.value || r.dpa===F.risp.value) &&
-    (ignore==='aisp' || !F.aisp.value || r.aisp===F.aisp.value) &&
-    (ignore==='del'  || !F.del.value  || r.delegacia===F.del.value) &&
+    (ignore==='dep'  || !F.dep.value  || has(r,'dep',F.dep.value)) &&
+    (ignore==='risp' || !F.risp.value || has(r,'dpa',F.risp.value)) &&
+    (ignore==='aisp' || !F.aisp.value || has(r,'aisp',F.aisp.value)) &&
+    (ignore==='del'  || !F.del.value  || has(r,'delegacia',F.del.value)) &&
     (!F.tipo.value || r[F.tipo.value]) &&
     (!F.idade.value || (F.idade.value==='adol' ? r.adol : !r.adol)) &&
     (!HAS_DATE || !F.d1.value || (r.data && r.data >= new Date(F.d1.value+'T00:00'))) &&
@@ -470,10 +491,10 @@ function applyFilters(ignore){
 }
 function refreshOptions(){
   // opções em cascata: cada filtro mostra valores compatíveis com os demais
-  opts(F.dep,  [...new Set(applyFilters('dep').map(r=>r.dep))].sort(natSort));
-  opts(F.risp, [...new Set(applyFilters('risp').map(r=>r.dpa))].sort(natSort));
-  opts(F.aisp, [...new Set(applyFilters('aisp').map(r=>r.aisp).filter(Boolean))].sort(natSort));
-  opts(F.del,  [...new Set(applyFilters('del').map(r=>r.delegacia))].sort(natSort), 'Todas');
+  opts(F.dep,  [...new Set(applyFilters('dep').flatMap(r=>pv(r,'dep')))].sort(natSort));
+  opts(F.risp, [...new Set(applyFilters('risp').flatMap(r=>pv(r,'dpa')))].sort(natSort));
+  opts(F.aisp, [...new Set(applyFilters('aisp').flatMap(r=>pv(r,'aisp')).filter(Boolean))].sort(natSort));
+  opts(F.del,  [...new Set(applyFilters('del').flatMap(r=>pv(r,'delegacia')))].sort(natSort), 'Todas');
 }
 
 /* ============ RENDER ============ */
@@ -505,14 +526,19 @@ function aplicarTema(t, redesenhar){
 }
 (function(){ let s = null; try{ s = localStorage.getItem('esp_tema'); }catch(_){} aplicarTema(s === 'light' ? 'light' : 'dark', false); })();
 document.getElementById('tema').addEventListener('click', () => aplicarTema(TEMA === 'dark' ? 'light' : 'dark', true));
-function groupCount(rs, key){ const m = {}; for (const r of rs){ const k = r[key]; m[k] = (m[k]||0)+1; } return Object.entries(m).sort((a,b)=>b[1]-a[1]); }
+const PLK = ['dep','dpa','delegacia','aisp'];                      // campos em que a pessoa pode aparecer em mais de um lugar
+const pv  = (r, key) => [...new Set(r.pl.map(p => p[key]))];       // valores distintos do campo
+const has = (r, key, k) => PLK.includes(key) ? r.pl.some(p => p[key] === k) : r[key] === k;
+function groupCount(rs, key){ const m = {}; for (const r of rs){ for (const k of (PLK.includes(key) ? pv(r, key) : [r[key]])) m[k] = (m[k]||0)+1; } return Object.entries(m).sort((a,b)=>b[1]-a[1]); }
 function stackedBy(rs, key, top, force=[]){
-  const g = groupCount(rs,key).slice(0, top||999).map(e=>e[0]);
+  const fv = ({dep:F.dep, dpa:F.risp, delegacia:F.del}[key] || {}).value;   // filtro ativo neste campo
+  const g = groupCount(rs,key).map(e=>e[0]).filter(k => !fv || k === fv).slice(0, top||999);
   for (const f of [...force].sort(natSort)) if (!g.includes(f)) g.push(f);   // itens forçados (zerados) ao final
   const ds = [['Mandado','mandado',C[0]],['APF','apf',C[1]],['AAAPAI','aaapai',C[2]],['TC','tc',C[3]]].map(([label,f,color])=>({
-    label, backgroundColor:color, borderRadius:3, data:g.map(k=>rs.filter(r=>r[key]===k && r[f]).length)}));
-  ds.push({label:'Sem indicação de prisão/apreensão', backgroundColor:C[5], borderRadius:3, data:g.map(k=>rs.filter(r=>r[key]===k && !r.mandado&&!r.apf&&!r.aaapai&&!r.tc).length)});
-  return {labels:g, datasets:ds};
+    label, backgroundColor:color, borderRadius:3, data:g.map(k=>rs.filter(r=>has(r,key,k) && r[f]).length)}));
+  ds.push({label:'Sem indicação de prisão/apreensão', backgroundColor:C[5], borderRadius:3, data:g.map(k=>rs.filter(r=>has(r,key,k) && !r.mandado&&!r.apf&&!r.aaapai&&!r.tc).length)});
+  const uniq = g.map(k => rs.filter(r => has(r,key,k)).length);   // pessoas únicas (cada pessoa conta 1×, mesmo com várias marcas)
+  return {labels:g, datasets:ds, uniq};
 }
 Chart.register(ChartDataLabels);
 Chart.defaults.set('plugins.datalabels', {display:false});
@@ -539,6 +565,7 @@ const rankColsPlugin = {
   afterDraw(chart, _args, o){
     if (!o || !o.names) return;
     const {ctx, chartArea:ca} = chart, y = chart.scales.y, x = chart.scales.x;
+    chart.$tot = [];
     const nameW = colName(chart), x0 = 4, xDiv1 = x0 + COL_RANK, xDiv2 = xDiv1 + nameW;
     ctx.save();
     // cabeçalhos
@@ -546,7 +573,7 @@ const rankColsPlugin = {
     const hy = ca.top - HEAD_H/2 - 2;
     ctx.textAlign = 'center'; ctx.fillText('RANK', x0 + COL_RANK/2, hy);
     ctx.textAlign = 'left';   ctx.fillText((o.title||'').toUpperCase(), xDiv1 + 10, hy);
-    ctx.textAlign = 'right';  ctx.fillText('TOTAL ▸', ca.right, hy);
+    ctx.textAlign = 'right';  ctx.fillText(o.uniq ? 'PESSOAS ▸' : 'TOTAL ▸', ca.right, hy);
     // divisórias
     ctx.strokeStyle = T().div; ctx.lineWidth = 1;
     for (const xx of [xDiv1, xDiv2]){ ctx.beginPath(); ctx.moveTo(xx+.5, ca.top - HEAD_H); ctx.lineTo(xx+.5, ca.bottom); ctx.stroke(); }
@@ -555,39 +582,92 @@ const rankColsPlugin = {
     o.names.forEach((n,i) => {
       const yy = y.getPixelForValue(i);
       if (i % 2 === 0){ ctx.fillStyle = T().stripe; const h = y.height / o.names.length; ctx.fillRect(x0, yy - h/2, ca.right - x0, h); }
-      ctx.font = '800 12.5px Verdana, Geneva, sans-serif'; ctx.fillStyle = i < 3 ? T().rank : T().muted; ctx.textAlign = 'center';
-      ctx.fillText(`${i+1}º`, x0 + COL_RANK/2, yy);
+      ctx.font = '800 12.5px Verdana, Geneva, sans-serif'; ctx.fillStyle = (o.offset||0)+i < 3 ? T().rank : T().muted; ctx.textAlign = 'center';
+      ctx.fillText(`${(o.offset||0)+i+1}º`, x0 + COL_RANK/2, yy);
       ctx.font = '600 12px Verdana, Geneva, sans-serif'; ctx.fillStyle = T().text; ctx.textAlign = 'left';
       ctx.fillText(fitText(ctx, n, nameW - 18), xDiv1 + 10, yy);
       ctx.font = '700 12px Verdana, Geneva, sans-serif'; ctx.fillStyle = T().text;
-      ctx.fillText((o.fmt||fmt)(o.totals[i]), x.getPixelForValue(o.totals[i]) + 6, yy);
+      const txt = (o.fmt||fmt)(o.totals[i]), tx = x.getPixelForValue(o.ends ? o.ends[i] : o.totals[i]) + 6;
+      ctx.fillText(txt, tx, yy);
+      if (o.uniq){   // número "clicável": sublinhado pontilhado + área de passagem do mouse
+        const tw = ctx.measureText(txt).width;
+        ctx.save(); ctx.strokeStyle = T().muted; ctx.setLineDash([2,2]); ctx.beginPath(); ctx.moveTo(tx, yy + 9); ctx.lineTo(tx + tw, yy + 9); ctx.stroke(); ctx.restore();
+        (chart.$tot = chart.$tot || [])[i] = {x:tx, y:yy, w:tw, h:18};
+      }
     });
     ctx.restore();
   }
 };
 Chart.register(rankColsPlugin);
 // barras horizontais, ranqueadas, com valor dentro de cada trecho
-function hbar(id, names, totals, datasets, {stacked=false, legend=false, fmtVal=fmt, title=''}={}){
+function hbar(id, names, totals, datasets, {stacked=false, legend=false, fmtVal=fmt, title='', soma=null, offset=0}={}){
   const box = document.getElementById(id).parentElement;
   box.style.height = Math.max(150, names.length*34 + (legend?96:58) + HEAD_H) + 'px';
   chart(id, {type:'bar', data:{labels:names, datasets:datasets.map(d=>({borderRadius:3, barPercentage:.8, categoryPercentage:.9, ...d}))},
     options:{responsive:true, maintainAspectRatio:false, indexAxis:'y',
       layout:{padding:{left:0, top:HEAD_H, right:8}},
-      scales:{x:{stacked, beginAtZero:true, grace:'14%', grid:{color:T().grid}, ticks:{callback:v=>fmtVal(v)}},
+      scales:{x:{stacked, beginAtZero:true, grace:'14%', grid:{color:T().grid}, ticks:{callback:v=>fmtVal(v), ...(soma ? {precision:0} : {})}},
               y:{stacked, grid:{display:false}, border:{display:false},
                  afterFit:s => { s.width = 4 + COL_RANK + colName(s.chart) + 6; }, ticks:{display:false}}},
       plugins:{
-        rankCols:{names, totals, title, fmt:fmtVal},
+        rankCols:{names, totals, title, fmt:fmtVal, ends:soma, uniq:!!soma, offset},
         legend:{display:legend, position:'bottom', labels:{boxWidth:12}},
-        tooltip:{callbacks:{title:c=>`${c[0].dataIndex+1}º · ${names[c[0].dataIndex]}`, label:c=>`${c.dataset.label}: ${fmtVal(c.raw)}`}},
+        tooltip:{callbacks:{title:c=>`${offset+c[0].dataIndex+1}º · ${names[c[0].dataIndex]}`, label:c=>`${c.dataset.label}: ${fmtVal(c.raw)}`}},
         datalabels:{display:c=>c.dataset.data[c.dataIndex]>0, color:c=>{ const b = c.dataset.backgroundColor; return textoSobre(Array.isArray(b) ? b[c.dataIndex] : b); }, anchor:'center', align:'center', clamp:true,
           font:{weight:700, size:11}, formatter:v=>fmtVal(v)}}}});
+  if (soma) ligarCaixaTotal(id, names, totals, soma);
 }
-function hbarStacked(id, rs, key, top, title, force){
+// caixa ao passar o mouse sobre o número final: pessoas únicas × soma das barras
+function ligarCaixaTotal(id, names, uniq, soma){
+  const cv = document.getElementById(id);
+  const tip = document.getElementById('totTip') || document.body.appendChild(Object.assign(document.createElement('div'), {id:'totTip', className:'totTip', role:'tooltip'}));
+  const esconde = () => { tip.style.display = 'none'; cv.style.cursor = ''; };
+  cv.onmouseleave = esconde;
+  cv.onmousemove = e => {
+    const ch = charts[id], r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+    const i = (ch && ch.$tot || []).findIndex(b => b && mx >= b.x - 4 && mx <= b.x + b.w + 4 && my >= b.y - b.h/2 && my <= b.y + b.h/2);
+    if (i < 0) return esconde();
+    const dif = soma[i] - uniq[i];
+    tip.innerHTML = `<div class="nm">${esc(names[i])}</div>
+      <div class="row"><span>Pessoas únicas</span><b>${fmt(uniq[i])}</b></div>
+      <div class="row"><span>Soma das barras</span><b>${fmt(soma[i])}</b></div>
+      <small>${dif > 0 ? `${fmt(dif)} ${dif === 1 ? 'pessoa tem' : 'pessoas têm'} mais de uma marca (Mandado, APF, AAAPAI ou TC) e ${dif === 1 ? 'é contada' : 'são contadas'} em cada fatia correspondente.` : 'Nenhuma pessoa tem mais de uma marca: a soma das barras coincide com o número de pessoas.'}</small>`;
+    tip.style.display = 'block'; cv.style.cursor = 'help';
+    const w = tip.offsetWidth, hh = tip.offsetHeight;
+    tip.style.left = Math.max(8, Math.min(innerWidth - w - 8, e.clientX + 14)) + 'px';
+    tip.style.top  = Math.max(8, Math.min(innerHeight - hh - 8, e.clientY + 14)) + 'px';
+  };
+}
+function hbarStacked(id, rs, key, top, title, force, pg){
   const d = stackedBy(rs, key, top, force);
-  const tot = d.labels.map((_,i)=>d.datasets.reduce((s,x)=>s+x.data[i],0));
-  hbar(id, d.labels, tot, d.datasets.filter(x=>x.data.some(v=>v>0)), {stacked:true, legend:true, title});
+  const a = pg ? pg.start : 0, b = pg ? pg.start + pg.size : d.labels.length;   // pg = página (10 por vez)
+  const labels = d.labels.slice(a, b), uniq = d.uniq.slice(a, b);
+  const datasets = d.datasets.map(x => ({...x, data:x.data.slice(a, b)}));
+  const soma = labels.map((_,i) => datasets.reduce((s,x) => s + x.data[i], 0));   // fim da barra = soma das fatias
+  hbar(id, labels, uniq, datasets.filter(x=>x.data.some(v=>v>0)), {stacked:true, legend:true, title, soma, offset:a});
 }
+// ---- delegacias: 10 por página ----
+const DEL_SIZE = 10; let delPage = 0, delSig = '';
+function renderDel(){
+  const sig = JSON.stringify(Object.values(F).map(e => e.value));
+  if (sig !== delSig){ delSig = sig; delPage = 0; }          // mudou o filtro → volta à página 1
+  const n = new Set(VIEW.flatMap(r => pv(r,'delegacia')).filter(k => !F.del.value || k === F.del.value)).size, pages = Math.max(1, Math.ceil(n / DEL_SIZE));
+  delPage = Math.min(delPage, pages - 1);
+  hbarStacked('chDel', VIEW, 'delegacia', 0, 'Delegacia', [], {start:delPage * DEL_SIZE, size:DEL_SIZE});
+  const ini = n ? delPage * DEL_SIZE + 1 : 0, fim = Math.min(n, (delPage + 1) * DEL_SIZE);
+  let nums = [];
+  const lo = Math.max(0, Math.min(delPage - 3, pages - 7)), hi = Math.min(pages, lo + 7);
+  for (let p = lo; p < hi; p++) nums.push(`<button type="button" data-p="${p}"${p === delPage ? ' aria-current="page"' : ''}>${p + 1}</button>`);
+  $('#pgDel').innerHTML = `<span class="pginfo">Delegacias ${fmt(ini)}–${fmt(fim)} de ${fmt(n)}</span>` + (pages > 1 ?
+    `<div class="pgbtns"><button type="button" data-p="0" ${delPage === 0 ? 'disabled' : ''} title="Primeira">«</button>
+     <button type="button" data-p="${delPage - 1}" ${delPage === 0 ? 'disabled' : ''} title="Anterior">‹</button>${nums.join('')}
+     <button type="button" data-p="${delPage + 1}" ${delPage >= pages - 1 ? 'disabled' : ''} title="Próxima">›</button>
+     <button type="button" data-p="${pages - 1}" ${delPage >= pages - 1 ? 'disabled' : ''} title="Última">»</button></div>` : '');
+}
+document.getElementById('pgDel').addEventListener('click', e => {
+  const b = e.target.closest('button[data-p]'); if (!b || b.disabled) return;
+  delPage = +b.dataset.p; renderDel();
+});
 function hbarSimple(id, entries, colors, opts={}){
   entries = entries.filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1]);
   hbar(id, entries.map(e=>e[0]), entries.map(e=>e[1]),
@@ -629,7 +709,7 @@ function render(){
   // departamentos e DPAs sem registros aparecem zerados (só quando o próprio filtro não está aplicado)
   hbarStacked('chDep',  VIEW, 'dep', 0, 'Departamento', F.dep.value ? [] : [...ALL_DEPS]);
   hbarStacked('chRisp', VIEW, 'dpa', 0, 'DPA', F.risp.value ? [] : [1,2,3,4,5,6,7,8].map(n=>`${n}º DPA`));
-  hbarStacked('chDel',  VIEW, 'delegacia', 10, 'Delegacia');
+  renderDel();
   hbarSimple('chDelito', groupCount(VIEW,'delito').slice(0,10), null, {label:'Pessoas', title:'Delito'});
   hbarSimple('chIdade', [['Maiores de idade',a.adultos],['Adolescentes',a.adol]], {'Maiores de idade':C[0],'Adolescentes':C[2]}, {label:'Pessoas', title:'Faixa etária'});
   const gfmt = v => grams(v).replace(/\s/,' ');
@@ -875,7 +955,7 @@ const sn = b => b ? 'Sim' : '';
 const cel = v => isNeg(v) ? '' : str(v);
 function linhasTabela(rs){
   return rs.map(r => { const x = r.raw;
-    return [r.fase, r.dep, r.dpa, r.delegacia, r.proc, r.nome, r.delitoRaw || r.delito, r.adol ? 'Adolescente' : 'Maior',
+    return [r.fase, pv(r,'dep').join(' + '), pv(r,'dpa').join(' + '), pv(r,'delegacia').join(' + '), r.proc, r.nome, r.delitoRaw || r.delito, r.adol ? 'Adolescente' : 'Maior',
       sn(r.mandado), sn(r.apf), sn(r.aaapai), sn(r.tc), sn(r.adolApre), sn(r.grp), sn(r.fianca), cel(r.reincEsp), cel(r.reincGen),
       cel(x[0]), cel(x[1]), cel(x[2]), cel(x[3]), cel(x[4]), cel(x[5]), cel(x[6]), cel(x[7]), cel(x[8]),
       cel(x[9]), cel(x[10]), cel(x[11])]; });
