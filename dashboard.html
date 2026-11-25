@@ -98,22 +98,26 @@ header{display:flex;align-items:center;justify-content:center;gap:44px;flex-wrap
 #cardArte.claro .div::before,#cardArte.claro .div::after{background:#193c6c}
 #cardArte.claro .rodape{background:#151615;margin:28px -54px -40px;padding:26px 0 30px}
 /* ----- Card comparativo (tabela por DPA / departamento) ----- */
-#cardArte .cabc,#cardArte .linc,#cardArte .totc{display:grid;grid-template-columns:1fr 132px 132px 138px 108px 168px;gap:0 6px;align-items:center}
+#cardArte .cabc,#cardArte .linc,#cardArte .subc,#cardArte .totc{display:grid;grid-template-columns:minmax(0,1fr) 142px 142px 130px 104px 176px;gap:0 6px;align-items:center}
 #cardArte .cabc{margin:26px 0 8px;align-items:end;text-align:center;font-weight:800}
 #cardArte .cabc .nm{text-align:left;font-size:22px;color:#c2c0bf;letter-spacing:1px;padding-left:20px}
 #cardArte .cabc .grp{grid-column:2 / span 2;font-size:20px;line-height:1.15;padding:0 4px 6px;border-bottom:3px solid #ffce44;color:#fff}
-#cardArte .cabc .sub2{font-size:21px;color:#ffce44;padding-top:8px}
+#cardArte .cabc .sub2{font-size:24px;color:#ffce44;padding-bottom:6px}
 #cardArte .cabc .h{font-size:24px;color:#fff;padding-bottom:6px}
 #cardArte .linc{border:3px solid #ffce44;border-radius:20px;height:66px;margin-bottom:9px}
-#cardArte .linc .nm{font-weight:800;font-size:34px;padding-left:22px}
-#cardArte .linc .n,#cardArte .totc .n{text-align:center;font-weight:900;font-size:48px;line-height:1;color:#ffce44;text-shadow:0 4px 0 #b8922a}
+#cardArte .linc .nm{font-weight:800;font-size:34px;padding-left:22px;white-space:nowrap}
+#cardArte .linc .n,#cardArte .subc .n,#cardArte .totc .n{text-align:center;font-weight:900;font-size:48px;line-height:1;color:#ffce44;text-shadow:0 4px 0 #b8922a}
 #cardArte .n.z{opacity:.38;text-shadow:none}
 #cardArte .linc .n.tt{color:#fff;text-shadow:none;border-left:3px solid rgba(255,206,68,.55);height:44px;line-height:44px}
+#cardArte .subc{border:3px solid #ffce44;border-radius:20px;height:66px;margin-bottom:9px;background:rgba(255,206,68,.10)}
+#cardArte .subc .nm{font-weight:900;font-size:30px;padding-left:22px;white-space:nowrap;letter-spacing:.5px}
+#cardArte .subc .n{font-size:46px}
+#cardArte .subc .n.tt{color:#fff;text-shadow:none;border-left:3px solid rgba(255,206,68,.55);height:44px;line-height:44px}
 #cardArte .sepc{height:4px;background:#ffce44;border-radius:2px;margin:16px 0 18px;opacity:.9}
 #cardArte .totc{border:4px solid #ffce44;border-radius:24px;height:104px;margin-top:20px;background:rgba(255,206,68,.07)}
-#cardArte .totc .nm{font-weight:900;font-size:50px;padding-left:24px;letter-spacing:1px}
-#cardArte .totc .n{font-size:60px}
-#cardArte .totc .n.tt{font-size:74px;border-left:3px solid rgba(255,206,68,.55)}
+#cardArte .totc .nm{font-weight:900;font-size:42px;line-height:.95;white-space:nowrap;padding-left:24px;letter-spacing:1px}
+#cardArte .totc .n{font-size:52px}
+#cardArte .totc .n.tt{font-size:64px;border-left:3px solid rgba(255,206,68,.55)}
 #cardArte .nota{text-align:center;color:#c2c0bf;font-size:17px;margin-top:14px;line-height:1.4}
 #cardArte.claro .cabc .nm,#cardArte.claro .nota{color:#595857}
 #cardArte.claro .cabc .grp{color:#151615;border-bottom-color:#193c6c}
@@ -121,6 +125,9 @@ header{display:flex;align-items:center;justify-content:center;gap:44px;flex-wrap
 #cardArte.claro .linc{background:#f8f6f5;border-color:#193c6c;color:#151615}
 #cardArte.claro .linc .n,#cardArte.claro .totc .n{color:#193c6c;text-shadow:none}
 #cardArte.claro .linc .n.tt{color:#151615;border-left-color:rgba(25,60,108,.4)}
+#cardArte.claro .subc{background:#e9e4e3;border-color:#193c6c;color:#151615}
+#cardArte.claro .subc .n{color:#193c6c;text-shadow:none}
+#cardArte.claro .subc .n.tt{color:#151615;border-left-color:rgba(25,60,108,.4)}
 #cardArte.claro .sepc{background:#193c6c}
 #cardArte.claro .totc{background:#ffce44;border-color:#193c6c;color:#151615}
 #cardArte.claro .totc .n,#cardArte.claro .totc .n.tt{color:#151615;border-left-color:rgba(21,22,21,.4)}
@@ -723,8 +730,7 @@ function render(){
   refreshOptions();
   VIEW = applyFilters();
   const a = aggregate(VIEW);
-  const presos = VIEW.filter(r => (r.mandado || r.apf) && !r.adol).length;
-  // mandado/APF da indicação de prisão: só maiores (adolescentes são apreendidos, não presos) — fecha com o destaque e com o card
+  const presos = VIEW.filter(r => r.mandado || r.apf || r.aaapai || r.tc).length;   // pessoas únicas com qualquer indicação de prisão/apreensão (fecha com o TOTAL GERAL do card comparativo)
   // colunas da planilha:  mandado = maior ou menor (soma, com a quebra) | APF = só maior (avisa se houver menor)
   //                       AAAPAI = só menor (avisa se houver maior)      | TC = maior ou menor (soma, com a quebra)
   const cnt = f => VIEW.filter(f).length, pl = (n, s, p) => n === 1 ? s : p;
@@ -735,7 +741,7 @@ function render(){
   const tcTot = cnt(r => r.tc), tcMa = cnt(r => r.tc && !r.adol), tcMe = cnt(r => r.tc && r.adol);
   const aviso = (k, t) => `<br><span class="alerta" data-k="${k}">⚠ ${t}</span>`;
   $('#kpiPessoas').innerHTML =
-    kpi(fmt(presos),'Pessoas com indicação de prisão','maiores: mandado ou APF',true) +
+    kpi(fmt(presos),'Pessoas únicas com indicação de prisão/apreensão','Mandado, APF, AAAPAI ou TC · cada pessoa conta 1×',true) +
     kpi(fmt(mandTot),'Cumprimento de mandado', `${fmt(mandMa)} ${pl(mandMa,'maior','maiores')} · ${fmt(mandMe)} ${pl(mandMe,'menor','menores')}`) +
     kpi(fmt(apfTot),'Vinculadas a APF', 'em regra só maiores' + (apfMe ? aviso('apf', `inclui ${fmt(apfMe)} ${pl(apfMe,'menor','menores')}`) : '')) +
     kpi(fmt(aaaTot),'AAAPAI', 'em regra só menores' + (aaaMa ? aviso('aaa', `inclui ${fmt(aaaMa)} ${pl(aaaMa,'maior','maiores')}`) : '')) +
@@ -1034,10 +1040,17 @@ function dadosComparativo(){
   for (const dd of deps) nova(dd);
   const todas = [...linhas.values()];
   const dpa = todas.filter(l => /º DPA$/.test(l.rot)).sort((x,y) => parseInt(x.rot) - parseInt(y.rot));
+  // blocos por departamento de origem: DGPC = 1º e 2º DPA · DGPB = 3º DPA · DGPI = 4º ao 8º DPA
+  const BLOCOS = [['DGPC',[1,2]], ['DGPB',[3]], ['DGPI',[4,5,6,7,8]]];
+  const blocos = BLOCOS.map(([nome, ns]) => {
+    const linhasB = ns.map(n => dpa.find(l => l.rot === `${n}º DPA`));
+    const sm = k => linhasB.reduce((s,l) => s + l[k], 0);
+    return {nome, linhas:linhasB, tot:{rot:`TOTAL ${nome}`, m:sm('m'), a:sm('a'), aa:sm('aa'), tc:sm('tc'), t:sm('t')}};
+  });
   const dep = deps.map(dd => todas.find(l => l.rot === dd));
   const S = k => todas.reduce((s,l) => s + l[k], 0);
   const apfMe = VIEW.filter(r => r.apf && r.adol).length, aaaMa = VIEW.filter(r => r.aaapai && !r.adol).length;   // marcas fora da regra da coluna
-  return {dpa, dep, tot:{m:S('m'), a:S('a'), aa:S('aa'), tc:S('tc'), t:S('t')}, apfMe, aaaMa};
+  return {dpa, dep, blocos, tot:{m:S('m'), a:S('a'), aa:S('aa'), tc:S('tc'), t:S('t')}, apfMe, aaaMa};
 }
 function montarCardComp(){
   const d = dadosComparativo(), agora = new Date(), p = n => String(n).padStart(2,'0');
@@ -1046,26 +1059,25 @@ function montarCardComp(){
   const pm = /^Dia D - (\d+)ª Parcial$/.exec(F.fase.value || ''), hora = pm && PARC_HORA[+pm[1]] ? ` (${PARC_HORA[+pm[1]]})` : '';   // parcial: acrescenta o horário
   const periodo = (F.fase.value || 'Todo o período').toLocaleUpperCase('pt-BR') + hora;
   const z = v => `<span class="n${v === 0 ? ' z' : ''}">${v}</span>`;
+  const sub = l => `<div class="subc"><span class="nm">${esc(l.rot)}</span>${z(l.m)}${z(l.a)}${z(l.aa)}${z(l.tc)}<span class="n tt${l.t === 0 ? ' z' : ''}">${l.t}</span></div>`;
   const lin = l => `<div class="linc"><span class="nm">${esc(l.rot)}</span>${z(l.m)}${z(l.a)}${z(l.aa)}${z(l.tc)}<span class="n tt${l.t === 0 ? ' z' : ''}">${l.t}</span></div>`;
   $('#cardArte').className = 'comp' + (TEMA === 'light' ? ' claro' : '');
   $('#cardArte').innerHTML = `
     <div class="topo"><img class="esp" src="${espSrc}"></div>
     <div class="faixa bal"><span>PARCIAL DE ${p(agora.getDate())}/${p(agora.getMonth()+1)}/${agora.getFullYear()} - ${esc(periodo)}</span></div>
-    <div class="cabc"><span class="nm">ÁREA</span><span class="grp">PESSOAS COM INDICAÇÃO DE PRISÃO</span><span class="h">AAAPAI</span><span class="h">TC</span><span class="h">TOTAL</span>
-      <span></span><span class="sub2">Mandado</span><span class="sub2">APF</span><span></span><span></span><span></span></div>
-    ${d.dpa.map(lin).join('')}
-    <div class="sepc"></div>
+    <div class="cabc"><span class="nm">ÁREA</span><span class="sub2">Mandado</span><span class="sub2">APF</span><span class="h">AAAPAI</span><span class="h">TC</span><span class="h">TOTAL</span></div>
+    ${d.blocos.map(b => b.linhas.map(lin).join('') + sub(b.tot) + '<div class="sepc"></div>').join('')}
     ${d.dep.map(lin).join('')}
-    <div class="totc"><span class="nm">TOTAL:</span><span class="n">${d.tot.m}</span><span class="n">${d.tot.a}</span><span class="n">${d.tot.aa}</span><span class="n">${d.tot.tc}</span><span class="n tt">${d.tot.t}</span></div>
+    <div class="totc"><span class="nm">TOTAL<br>GERAL</span><span class="n">${d.tot.m}</span><span class="n">${d.tot.a}</span><span class="n">${d.tot.aa}</span><span class="n">${d.tot.tc}</span><span class="n tt">${d.tot.t}</span></div>
     <div class="nota">Mandado: maiores e menores · APF: em regra só maiores · AAAPAI: em regra só menores · TC: termo circunstanciado · Total = pessoas (pessoa + RO) com alguma marca; quem tem mais de uma conta uma só vez${(d.apfMe || d.aaaMa) ? `<br><b>Incluem, fora da regra da coluna (conferir na planilha): ${[d.apfMe ? `${d.apfMe} menor${d.apfMe > 1 ? 'es' : ''} com APF` : '', d.aaaMa ? `${d.aaaMa} maior${d.aaaMa > 1 ? 'es' : ''} com AAAPAI` : ''].filter(Boolean).join(' · ')}</b>` : ''}</div>
     <div class="rodape"><div class="logos"><img src="${pcSrc}"><span class="sep"></span><img src="${sspSrc}"></div><i>Dados parciais sujeitos a conferência</i></div>`;
-  document.querySelectorAll('#cardArte .linc .n, #cardArte .totc .n').forEach(el => {   // números grandes (3+ dígitos): reduz a fonte até caber na coluna, sem encostar no vizinho
+  document.querySelectorAll('#cardArte .linc .n, #cardArte .subc .n, #cardArte .totc .n').forEach(el => {   // números grandes (3+ dígitos): reduz a fonte até caber na coluna, sem encostar no vizinho
     el.style.whiteSpace = 'nowrap';
     let fs = parseFloat(getComputedStyle(el).fontSize);
     const rg = document.createRange(); rg.selectNodeContents(el);   // largura real do texto (o bloco sempre ocupa a coluna inteira)
-    for (; fs > 22 && rg.getBoundingClientRect().width > el.clientWidth - (el.closest('.totc') ? 36 : 16); fs--) el.style.fontSize = fs + 'px';
+    for (; fs > 22 && rg.getBoundingClientRect().width > el.clientWidth - (el.closest('.totc') ? 44 : 16); fs--) el.style.fontSize = fs + 'px';
   });
-  for (const sel of ['#cardArte .totc .n:not(.tt)', '#cardArte .totc .n.tt']){   // linha TOTAL: mesmo tamanho em todas as colunas da mesma família
+  for (const sel of ['#cardArte .subc .n:not(.tt)', '#cardArte .subc .n.tt', '#cardArte .totc .n:not(.tt)', '#cardArte .totc .n.tt']){   // linha TOTAL: mesmo tamanho em todas as colunas da mesma família
     const els = [...document.querySelectorAll(sel)], min = Math.min(...els.map(e => parseFloat(getComputedStyle(e).fontSize)));
     els.forEach(e => e.style.fontSize = min + 'px');
   }
