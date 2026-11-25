@@ -32,13 +32,13 @@
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 Verdana,Geneva,"DejaVu Sans",sans-serif}
-header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:18px 24px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#1d1d1d,#151615)}
+header{display:flex;align-items:center;justify-content:center;gap:44px;flex-wrap:wrap;padding:18px 24px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#1d1d1d,#151615)}
 .brand img{height:84px;width:auto;display:block}
-.inst{display:flex;align-items:center;gap:22px}
+.inst{display:flex;align-items:center;gap:22px;padding-left:44px;border-left:1px solid var(--line)}
 .inst img{height:46px;width:auto;display:block}
 .inst .sep{width:1px;height:44px;background:var(--line)}
-.statusbar{display:flex;justify-content:flex-end;padding:10px 24px;border-bottom:1px solid var(--line);background:var(--bar)}
-@media (max-width:700px){.brand img{height:64px}.inst img{height:34px}.inst{gap:14px}.statusbar{justify-content:flex-start;padding:10px 16px}}
+.statusbar{padding:10px 0;border-bottom:1px solid var(--line);background:var(--bar)}
+@media (max-width:700px){header{gap:16px}.brand img{height:64px}.inst img{height:34px}.inst{gap:14px;padding-left:0;border-left:0}.status{padding:0 16px}}
 .printinfo{display:none}
 .printing .statusbar{display:block;padding:14px 24px 16px}
 .printing .status, .printing .filters{display:none!important}
@@ -100,7 +100,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:16px;fl
 .toast{position:fixed;right:16px;bottom:16px;z-index:20;max-width:420px;background:var(--panel2);border:1px solid var(--gold);border-radius:10px;padding:12px 14px;font-size:13px;box-shadow:0 8px 24px #0008}
 .toast a{color:var(--gold);font-weight:700}
 .toast button{margin-left:6px;padding:2px 8px}
-.status{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;flex-wrap:wrap}
+.status{display:flex;align-items:center;justify-content:space-between;gap:10px 16px;color:var(--muted);font-size:12px;flex-wrap:wrap;max-width:1500px;margin:0 auto;padding:0 24px}
+.status .grp{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 button,.btn{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font:inherit;font-weight:600;cursor:pointer}
 button:hover{border-color:var(--gold)}
 button.primary{background:var(--gold);color:#111;border-color:var(--gold)}
@@ -202,13 +203,17 @@ ul.obs{margin:0;padding-left:18px;color:var(--muted);font-size:12.5px}
 <div class="statusbar">
   <div class="printinfo" id="printinfo"></div>
   <div class="status">
-    <span id="upd">—</span>
-    <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="auto" style="width:auto" checked> atualizar a cada 5 min</label>
-    <button id="tema" type="button" title="Alternar entre tema escuro e claro" aria-label="Alternar tema"></button>
-    <button id="reload" class="primary">↻ Atualizar dados</button>
-    <button id="print">📄 Gerar PDF</button>
-    <button id="card">🖼️ Gerar Card</button>
-    <button id="sair" title="Encerrar a sessão">Sair</button>
+    <div class="grp">
+      <button id="reload" class="primary">↻ Atualizar dados</button>
+      <span id="upd">—</span>
+      <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="auto" style="width:auto" checked> atualizar a cada 5 min</label>
+      <button id="sair" title="Encerrar a sessão">Sair</button>
+    </div>
+    <div class="grp">
+      <button id="tema" type="button" title="Alternar entre tema escuro e claro" aria-label="Alternar tema"></button>
+      <button id="card">🖼️ Gerar Card</button>
+      <button id="print">📄 Gerar PDF</button>
+    </div>
   </div>
 </div>
 
