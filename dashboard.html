@@ -506,7 +506,7 @@ function stackedBy(rs, key, top, force=[]){
   for (const f of [...force].sort(natSort)) if (!g.includes(f)) g.push(f);   // itens forçados (zerados) ao final
   const ds = [['Mandado','mandado',C[0]],['APF','apf',C[1]],['AAAPAI','aaapai',C[2]],['TC','tc',C[3]]].map(([label,f,color])=>({
     label, backgroundColor:color, borderRadius:3, data:g.map(k=>rs.filter(r=>r[key]===k && r[f]).length)}));
-  ds.push({label:'Sem indicação de prisão', backgroundColor:C[5], borderRadius:3, data:g.map(k=>rs.filter(r=>r[key]===k && !r.mandado&&!r.apf&&!r.aaapai&&!r.tc).length)});
+  ds.push({label:'Sem indicação de prisão/apreensão', backgroundColor:C[5], borderRadius:3, data:g.map(k=>rs.filter(r=>r[key]===k && !r.mandado&&!r.apf&&!r.aaapai&&!r.tc).length)});
   return {labels:g, datasets:ds};
 }
 Chart.register(ChartDataLabels);
