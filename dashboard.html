@@ -526,10 +526,13 @@ function render(){
   VIEW = applyFilters();
   const a = aggregate(VIEW);
   const presos = VIEW.filter(r => (r.mandado || r.apf) && !r.adol).length;
+  // mandado/APF da indicação de prisão: só maiores (adolescentes são apreendidos, não presos) — fecha com o destaque e com o card
+  const mandAd = VIEW.filter(r => r.mandado && !r.adol).length;
+  const apfAd  = VIEW.filter(r => r.apf && !r.adol).length;
   $('#kpiPessoas').innerHTML =
     kpi(fmt(presos),'Pessoas com indicação de prisão','maiores: mandado ou APF',true) +
-    kpi(fmt(a.mandado),'Cumprimento de mandado') +
-    kpi(fmt(a.apf),'Vinculadas a APF') +
+    kpi(fmt(mandAd),'Cumprimento de mandado','somente maiores') +
+    kpi(fmt(apfAd),'Vinculadas a APF','somente maiores') +
     kpi(fmt(a.aaapai),'AAAPAI','apreensão de adolescente') +
     kpi(fmt(a.adolApre),'Adolescentes que permaneceram apreendidos', `${fmt(a.adol)} adolescentes no total`) +
     kpi(fmt(a.tc),'Termos circunstanciados') +
