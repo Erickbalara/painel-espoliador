@@ -164,6 +164,9 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
 .totTip b{font-variant-numeric:tabular-nums}
 .totTip .nm{font-weight:700;margin-bottom:4px}
 .totTip .row{display:flex;justify-content:space-between;gap:16px}
+.totTip .ln{margin-top:8px;padding-top:6px;border-top:1px solid var(--line)}
+.totTip .ln span{color:var(--muted);font-size:11px}
+.kpi .alerta{color:var(--bad);font-weight:700;cursor:help;border-bottom:1px dotted var(--bad)}
 .totTip small{display:block;margin-top:6px;color:var(--muted);font-size:11px;line-height:1.4}
 .pager{display:flex;align-items:center;justify-content:space-between;gap:10px 16px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
 .pager .pginfo{color:var(--muted);font-size:12px}
@@ -307,6 +310,7 @@ ul.obs{margin:0;padding-left:18px;color:var(--muted);font-size:12.5px}
   </div>
 
   <p class="note">
+    Cumprimento de mandado e Termo circunstanciado somam maiores e menores. APF é, em regra, de maiores e AAAPAI de menores: o que estiver marcado fora dessa regra também é somado e aparece em alerta (passe o mouse). A coluna "Adolescente?" define a idade; sem ela, AAAPAI marcado indica menor.
     Fonte: abas de departamento da planilha (a aba SSPIO é ignorada por ser consolidação). Linhas repetidas da mesma pessoa (mesmo RO + nome) no mesmo departamento e período contam uma vez; se ela aparecer em outro departamento ou período, conta a cada aparição. Sem nome, o RO conta como uma pessoa "Não identificado".
     Pesos de drogas, dinheiro e itens descritos em texto repetidos no mesmo procedimento (co-autores) contam uma vez; armas, veículos e celulares somam por pessoa.
     "Fase preparatória" = linhas acima da 1ª marcação "ESPOLIADOR DIA D" de cada aba; "Dia D - Total" = todas as linhas abaixo dela; "Dia D - nª Parcial" = linhas entre a marcação da parcial n e a marcação seguinte.
@@ -388,6 +392,7 @@ function parseDate(v){
 
 /* ============ LEITURA DA PLANILHA ============ */
 let PARC_HORA = {};   // horário de cada parcial, lido da marcação (ex.: {1:'7h30min', 2:'9h30min'})
+let ALERTAS = {apf:[], aaa:[]};   // registros fora da regra da coluna (menor com APF / maior com AAAPAI)
 let MAXP = 0;   // maior nº de parcial encontrado nas marcações "ESPOLIADOR DIA D ... (nª parcial)"
 let RECORDS = [], HAS_DATE = false, ALL_DEPS = new Set(), RELACAO = {...RELACAO_CISP};
 
@@ -422,7 +427,7 @@ function parseWorkbook(wb){
         proc: str(r[2]).replace(/^\*\s*/,''), nome: semNome(str(r[8])) ? NAO_ID : str(r[8]),
         mandado: isYes(r[3]), apf: isYes(r[4]), aaapai: isYes(r[5]), tc: isYes(r[6]),
         delitoRaw: str(r[7]), delito: normDelito(r[7]),
-        adol: isYes(r[9]) || isYes(r[5]), adolApre: isYes(r[10]), grp: isYes(r[11]), fianca: isYes(r[12]),
+        adol: isYes(r[9]) || (isYes(r[5]) && !/^n[aã]o/i.test(str(r[9]))), adolApre: isYes(r[10]), grp: isYes(r[11]), fianca: isYes(r[12]),
         reincEsp: r[13], reincGen: r[14],
         raw: r.slice(15,27),
         data: dateCol >= 0 ? parseDate(r[dateCol]) : null,
@@ -720,15 +725,22 @@ function render(){
   const a = aggregate(VIEW);
   const presos = VIEW.filter(r => (r.mandado || r.apf) && !r.adol).length;
   // mandado/APF da indicação de prisão: só maiores (adolescentes são apreendidos, não presos) — fecha com o destaque e com o card
-  const mandAd = VIEW.filter(r => r.mandado && !r.adol).length;
-  const apfAd  = VIEW.filter(r => r.apf && !r.adol).length;
+  // colunas da planilha:  mandado = maior ou menor (soma, com a quebra) | APF = só maior (avisa se houver menor)
+  //                       AAAPAI = só menor (avisa se houver maior)      | TC = maior ou menor (soma, com a quebra)
+  const cnt = f => VIEW.filter(f).length, pl = (n, s, p) => n === 1 ? s : p;
+  const mandTot = cnt(r => r.mandado), mandMa = cnt(r => r.mandado && !r.adol), mandMe = cnt(r => r.mandado && r.adol);
+  const apfTot = cnt(r => r.apf), aaaTot = cnt(r => r.aaapai);   // marcado = soma, seja qual for a idade
+  ALERTAS = {apf: VIEW.filter(r => r.apf && r.adol), aaa: VIEW.filter(r => r.aaapai && !r.adol)};   // fora da regra da coluna
+  const apfMe = ALERTAS.apf.length, aaaMa = ALERTAS.aaa.length;
+  const tcTot = cnt(r => r.tc), tcMa = cnt(r => r.tc && !r.adol), tcMe = cnt(r => r.tc && r.adol);
+  const aviso = (k, t) => `<br><span class="alerta" data-k="${k}">⚠ ${t}</span>`;
   $('#kpiPessoas').innerHTML =
     kpi(fmt(presos),'Pessoas com indicação de prisão','maiores: mandado ou APF',true) +
-    kpi(fmt(mandAd),'Cumprimento de mandado','somente maiores') +
-    kpi(fmt(apfAd),'Vinculadas a APF','somente maiores') +
-    kpi(fmt(a.aaapai),'AAAPAI','apreensão de adolescente') +
+    kpi(fmt(mandTot),'Cumprimento de mandado', `${fmt(mandMa)} ${pl(mandMa,'maior','maiores')} · ${fmt(mandMe)} ${pl(mandMe,'menor','menores')}`) +
+    kpi(fmt(apfTot),'Vinculadas a APF', 'em regra só maiores' + (apfMe ? aviso('apf', `inclui ${fmt(apfMe)} ${pl(apfMe,'menor','menores')}`) : '')) +
+    kpi(fmt(aaaTot),'AAAPAI', 'em regra só menores' + (aaaMa ? aviso('aaa', `inclui ${fmt(aaaMa)} ${pl(aaaMa,'maior','maiores')}`) : '')) +
     kpi(fmt(a.adolApre),'Adolescentes que permaneceram apreendidos', `${fmt(a.adol)} adolescentes no total`) +
-    kpi(fmt(a.tc),'Termos circunstanciados') +
+    kpi(fmt(tcTot),'Termos circunstanciados', `${fmt(tcMa)} ${pl(tcMa,'maior','maiores')} · ${fmt(tcMe)} ${pl(tcMe,'menor','menores')}`) +
     kpi(fmt(a.grp),'Presos com GRP') +
     kpi(fmt(a.fianca),'Soltos com fiança') +
     kpi(fmt(a.reinc),'Reincidentes*', `${fmt(a.reincEsp)} específicas<br>${fmt(a.reincGen)} genéricas`) +
@@ -756,9 +768,27 @@ function render(){
 
   $('#obs').innerHTML = a.obs.length ? a.obs.map(o=>`<li>${esc(o.t)} — <span>${esc(o.r.delegacia)} · ${esc(o.r.proc)}</span></li>`).join('') : '<li>Nenhum item em texto livre no filtro atual.</li>';
   renderTabela();
+  ligarAlertas();
   fitKpis();
 }
 // número de cada KPI no maior tamanho que cabe (~85% da largura útil da caixa), com teto
+const ALERTA_TXT = {apf:'Menores com APF (contam na soma)', aaa:'Maiores com AAAPAI (contam na soma)'};
+function ligarAlertas(){
+  const tip = document.getElementById('totTip') || document.body.appendChild(Object.assign(document.createElement('div'), {id:'totTip', className:'totTip', role:'tooltip'}));
+  const box = $('#kpiPessoas');
+  box.onmouseleave = () => { tip.style.display = 'none'; };
+  box.onmousemove = e => {
+    const el = e.target.closest('.alerta'); if (!el){ tip.style.display = 'none'; return; }
+    const lista = ALERTAS[el.dataset.k] || [];
+    tip.innerHTML = `<div class="nm">${ALERTA_TXT[el.dataset.k]}</div>` + lista.map(r => {
+      const [aba, linha] = String(r.id).split('!');
+      return `<div class="ln"><b>${esc(r.nome)}</b><br>RO ${esc(r.proc || '—')}<br><span>Aba ${esc(aba)} · linha ${esc(linha)}</span></div>`; }).join('');
+    tip.style.display = 'block';
+    const w = tip.offsetWidth, hh = tip.offsetHeight;
+    tip.style.left = Math.max(8, Math.min(innerWidth - w - 8, e.clientX + 14)) + 'px';
+    tip.style.top  = Math.max(8, Math.min(innerHeight - hh - 8, e.clientY + 14)) + 'px';
+  };
+}
 function fitKpis(){
   document.querySelectorAll('.kpi .v').forEach(v => {
     const box = v.parentElement, cs = getComputedStyle(box);
@@ -995,15 +1025,17 @@ function dadosComparativo(){
   }
   for (const r of VIEW){   // quem tem DPA numérico entra na linha do DPA; unidade especializada entra na linha do seu departamento
     const alvo = /^(\d+)º DPA$/.test(r.dpa) ? nova(r.dpa) : nova(r.dep);
-    if (!r.adol){ if (r.mandado) alvo.m++; if (r.apf) alvo.a++; }
-    if (r.aaapai) alvo.aa++;
+    if (r.mandado) alvo.m++;                 // mandado: maior ou menor
+    if (r.apf) alvo.a++;                     // APF marcado = soma (em regra, maior)
+    if (r.aaapai) alvo.aa++;                 // AAAPAI marcado = soma (em regra, menor)
   }
   for (const dd of deps) nova(dd);
   const todas = [...linhas.values()].map(l => ({...l, t:l.m + l.a + l.aa}));
   const dpa = todas.filter(l => /º DPA$/.test(l.rot)).sort((x,y) => parseInt(x.rot) - parseInt(y.rot));
   const dep = deps.map(dd => todas.find(l => l.rot === dd));
   const S = k => todas.reduce((s,l) => s + l[k], 0);
-  return {dpa, dep, tot:{m:S('m'), a:S('a'), aa:S('aa'), t:S('t')}};
+  const apfMe = VIEW.filter(r => r.apf && r.adol).length, aaaMa = VIEW.filter(r => r.aaapai && !r.adol).length;   // marcas fora da regra da coluna
+  return {dpa, dep, tot:{m:S('m'), a:S('a'), aa:S('aa'), t:S('t')}, apfMe, aaaMa};
 }
 function montarCardComp(){
   const d = dadosComparativo(), agora = new Date(), p = n => String(n).padStart(2,'0');
@@ -1023,7 +1055,7 @@ function montarCardComp(){
     <div class="sepc"></div>
     ${d.dep.map(lin).join('')}
     <div class="totc"><span class="nm">TOTAL:</span><span class="n">${d.tot.m}</span><span class="n">${d.tot.a}</span><span class="n">${d.tot.aa}</span><span class="n tt">${d.tot.t}</span></div>
-    <div class="nota">Mandado e APF: somente maiores de idade · AAAPAI: apreensão de adolescente · Total = Mandado + APF + AAAPAI</div>
+    <div class="nota">Mandado: maiores e menores · APF: em regra só maiores · AAAPAI: em regra só menores · Total = Mandado + APF + AAAPAI${(d.apfMe || d.aaaMa) ? `<br><b>Incluem, fora da regra da coluna (conferir na planilha): ${[d.apfMe ? `${d.apfMe} menor${d.apfMe > 1 ? 'es' : ''} com APF` : '', d.aaaMa ? `${d.aaaMa} maior${d.aaaMa > 1 ? 'es' : ''} com AAAPAI` : ''].filter(Boolean).join(' · ')}</b>` : ''}</div>
     <div class="rodape"><div class="logos"><img src="${pcSrc}"><span class="sep"></span><img src="${sspSrc}"></div><i>Dados parciais sujeitos a conferência</i></div>`;
   const bal = $('#cardArte .bal');   // texto da faixa longo (ex.: parcial + horário): reduz a fonte até caber, com respiro nas laterais
   const sp = bal.firstElementChild;
